@@ -43,10 +43,60 @@ Action ComportamientoIngeniero::think(Sensores sensores)
   return accion;
 }
 
+/**
+ * @brief Determina la mejor opcion entre las 3 casillas que tiene delante
+ * @param i terreno que hay en la posición 1 de superficie (45 izq)
+ * @param c terreno que hay en la posición 2 de superficie (justo delante)
+ * @param d terreno que hay en la posición 3 de superficie (45 derecha)
+ * @return 2 si es mejor WALK, 1 para TURN_SL y 3 para TURN_SR. 0 no hay nada interesante
+ */
+int VeoCasillaInteresanteI(char i, char c, char d){
+  if(c=='U') return 2;
+  else if(i=='U') return 1;
+  else if(d=='U') return 3;
+  else if(c=='C') return 2;
+  else if(i=='C') return 1;
+  else if(d=='C') return 3;
+  else return 0;
+}
+
 // Niveles iniciales (Comportamientos reactivos simples)
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores)
 {
   Action accion = IDLE;
+  //El comportamiento de seguir un camino hasta encontrar una planta de T. Residuos
+  //Poner el valor de los sensores de visión sobre los mapas.
+  ActualizarMapa(sensores);
+
+  //Actualización de las variables de estado
+  if(sensores.superficie[0] == 'D') tiene_zapatillas = true;
+
+  //Definición del comportamiento
+  if(sensores.superficie[0] == 'U'){ //lleue a una 'U'
+    return IDLE;
+  }
+
+  int pos = VeoCasillaInteresanteI(sensores.superficie[1],sensores.superficie[2],sensores.superficie[3]);
+  
+  switch(pos)
+  {
+    case 2:
+      accion = WALK;
+      break;
+    case 1:
+      accion = TURN_SL;
+      break;
+    case 3:
+      accion = TURN_SR;
+      break;
+    default:
+        accion = TURN_SL;
+        break;
+  }
+
+
+  //Devolver la siguiente acción a hacer
+  last_action = accion;
   return accion;
 }
 
@@ -300,6 +350,7 @@ void ComportamientoIngeniero::ActualizarMapa(Sensores sensores)
     mapaCotas[sensores.posF - 3][sensores.posC] = sensores.cota[15];
     break;
   }
+
 }
 
 /**
