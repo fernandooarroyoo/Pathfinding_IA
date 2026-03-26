@@ -44,17 +44,39 @@ Action ComportamientoIngeniero::think(Sensores sensores)
 }
 
 /**
+ * @brief Determina si casilla viable por altura
+ * @param casilla tipo de terreno
+ * @param dif diferencia de altura entre casillas
+ * @param zap indica si estoy en posesión de las zapatillas
+ * @return 'P' si no es accesible por altura y casilla en otro caso
+ */
+char ViablePorAlturaI(char casilla, int dif, bool zap){
+  if(abs(dif) <= 1 or (zap and abs(dif) <=2)){
+    return casilla;
+  }
+  else{
+    return 'P';
+  }
+}
+
+
+/**
  * @brief Determina la mejor opcion entre las 3 casillas que tiene delante
  * @param i terreno que hay en la posición 1 de superficie (45 izq)
  * @param c terreno que hay en la posición 2 de superficie (justo delante)
  * @param d terreno que hay en la posición 3 de superficie (45 derecha)
  * @return 2 si es mejor WALK, 1 para TURN_SL y 3 para TURN_SR. 0 no hay nada interesante
  */
-int VeoCasillaInteresanteI(char i, char c, char d){
+int VeoCasillaInteresanteI(char i, char c, char d,bool zapatillas){
   if(c=='U') return 2;
   else if(i=='U') return 1;
   else if(d=='U') return 3;
-  else if(c=='C') return 2;
+  else if(!zapatillas){
+    if( c == 'D') return 2;
+    else if(i == 'D') return 1;
+    else if(d == 'D') return 3;
+  }
+  if(c=='C') return 2;
   else if(i=='C') return 1;
   else if(d=='C') return 3;
   else return 0;
@@ -76,7 +98,10 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
     return IDLE;
   }
 
-  int pos = VeoCasillaInteresanteI(sensores.superficie[1],sensores.superficie[2],sensores.superficie[3]);
+  char i = ViablePorAlturaI(sensores.superficie[1],sensores.cota[1]-sensores.cota[0],tiene_zapatillas);
+  char c = ViablePorAlturaI(sensores.superficie[2],sensores.cota[2]-sensores.cota[0],tiene_zapatillas);
+  char d = ViablePorAlturaI(sensores.superficie[3],sensores.cota[3]-sensores.cota[0],tiene_zapatillas);
+  int pos = VeoCasillaInteresanteI(i,c,d,tiene_zapatillas);
   
   switch(pos)
   {
