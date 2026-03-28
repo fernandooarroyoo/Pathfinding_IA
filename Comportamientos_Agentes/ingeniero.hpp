@@ -192,8 +192,6 @@ private:
   int giros_forzados; //variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
 
   map<pair<int,int>,int> mapa_visitado; //guardar las veces que hemos visitado una casilla, para el nivel 1.
-
-  int f=0,c=0;
   
 };
 
