@@ -25,6 +25,7 @@ public:
     last_action = IDLE;
     tiene_zapatillas = false;
     giro45Izq = 0;
+    giros_forzados = 0;
   }
 
   /**
@@ -188,6 +189,7 @@ private:
   Action last_action;
   bool tiene_zapatillas;
   int giro45Izq;
+  int giros_forzados; //variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
 };
 
 #endif
