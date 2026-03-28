@@ -167,6 +167,24 @@ bool ComportamientoIngeniero::es_camino(unsigned char c) const
   return (c == 'C' || c == 'D' || c == 'U');
 }
 
+
+int VeoCasillaInteresanteII(char i, char c, char d, bool zapatillas, int veces_c){
+  if (!zapatillas)
+  {
+    if (c == 'D')
+      return 2;
+    else if (i == 'D')
+      return 1;
+    else if (d == 'D')
+      return 3;
+  }
+
+  if (c == 'C' || c == 'S' && veces_c < 2) return 2;
+  else if (i == 'C' || i == 'S') return 1;
+  else if (d == 'C' || d == 'S') return 3;
+  else return 0;
+}
+
 /**
  * @brief Comportamiento reactivo del ingeniero para el Nivel 1.
  * @param sensores Datos actuales de los sensores.
@@ -175,7 +193,54 @@ bool ComportamientoIngeniero::es_camino(unsigned char c) const
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores)
 {
   // TODO: Implementar comportamiento reactivo para el Nivel 1.
-  return IDLE;
+  Action accion = IDLE;
+  ActualizarMapa(sensores);
+  if(giros_forzados > 0){
+    giros_forzados--;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
+
+  // Actualización de las variables de estado
+  if (sensores.superficie[0] == 'D')
+    tiene_zapatillas = true;
+  
+    char i = ViablePorAlturaI(sensores.superficie[1],sensores.cota[1]-sensores.cota[0],tiene_zapatillas);
+    char c = ViablePorAlturaI(sensores.superficie[2],sensores.cota[2]-sensores.cota[0],tiene_zapatillas);
+    char d = ViablePorAlturaI(sensores.superficie[3],sensores.cota[3]-sensores.cota[0],tiene_zapatillas); //hipótesis: los caminos pueden cambiar de cota
+
+
+    ubicacion actual={sensores.posF,sensores.posC,sensores.rumbo};
+    ubicacion Alante = Delante(actual);
+    int pos = VeoCasillaInteresanteII(i, c, d, tiene_zapatillas,mapa_visitado[{Alante.f,Alante.c}]);
+
+    switch (pos)
+    {
+      case 2:
+        accion = WALK;
+        break;
+      case 1:
+        accion = TURN_SL;
+        break;
+      case 3:
+        accion = TURN_SR;
+        break;
+      default:
+        accion = TURN_SL;
+        break;
+    }
+
+    if(sensores.agentes[2] == 't') {//si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
+    giros_forzados = 1;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
+
+
+  last_action = accion;
+  return accion;
 }
 
 // Niveles avanzados (Uso de búsqueda)
