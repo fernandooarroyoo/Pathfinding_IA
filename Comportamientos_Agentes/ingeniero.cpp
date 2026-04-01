@@ -104,8 +104,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
   // Poner el valor de los sensores de visión sobre los mapas.
   ActualizarMapa(sensores);
 
-  //Compruebo si está en medio de un giro forzado, por esquivar a un técnico, por ejemplo.
-  if(giros_forzados > 0){
+  // Compruebo si está en medio de un giro forzado, por esquivar a un técnico, por ejemplo.
+  if (giros_forzados > 0)
+  {
     giros_forzados--;
     accion = TURN_SL;
     last_action = accion;
@@ -122,12 +123,12 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
     return IDLE;
   }
 
-
   char i = ViablePorAlturaI(sensores.superficie[1], sensores.cota[1] - sensores.cota[0], tiene_zapatillas);
   char c = ViablePorAlturaI(sensores.superficie[2], sensores.cota[2] - sensores.cota[0], tiene_zapatillas);
   char d = ViablePorAlturaI(sensores.superficie[3], sensores.cota[3] - sensores.cota[0], tiene_zapatillas);
-  
-  if(sensores.agentes[2] == 't') {//si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
+
+  if (sensores.agentes[2] == 't')
+  { // si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
     giros_forzados = 1;
     accion = TURN_SL;
     last_action = accion;
@@ -167,22 +168,21 @@ bool ComportamientoIngeniero::es_camino(unsigned char c) const
   return (c == 'C' || c == 'D' || c == 'U');
 }
 
+ubicacion ComportamientoIngeniero::Izquierda(const ubicacion &actual) const
+{
+  // vamos a aprovechar la función Delante que tenemos, voy a calcular el rumbo
+  // Nuevo, sabiendo que girar 90º es restarle 2 (en mod 8, porque se divide en giros de 45º)
+  // El casteo cambia 0 por norte, 1 noroeste...
+  ubicacion izq = {actual.f, actual.c, actual.brujula};
+  izq.brujula = static_cast<Orientacion>((actual.brujula + 6) % 8); // +6 = -2 mod 8
+  return Delante(izq);
+}
 
-int VeoCasillaInteresanteII(char i, char c, char d, bool zapatillas, int veces_c){
-  if (!zapatillas)
-  {
-    if (c == 'D')
-      return 2;
-    else if (i == 'D')
-      return 1;
-    else if (d == 'D')
-      return 3;
-  }
-
-  if (c == 'C' || c == 'S' && veces_c < 2) return 2;
-  else if (i == 'C' || i == 'S') return 1;
-  else if (d == 'C' || d == 'S') return 3;
-  else return 0;
+ubicacion ComportamientoIngeniero::Derecha(const ubicacion &actual) const
+{
+  ubicacion der = {actual.f, actual.c, actual.brujula};
+  der.brujula = static_cast<Orientacion>((actual.brujula + 2) % 8);
+  return Delante(der);
 }
 
 /**
@@ -195,7 +195,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   // TODO: Implementar comportamiento reactivo para el Nivel 1.
   Action accion = IDLE;
   ActualizarMapa(sensores);
-  if(giros_forzados > 0){
+  if (giros_forzados > 0)
+  {
     giros_forzados--;
     accion = TURN_SL;
     last_action = accion;
@@ -205,40 +206,59 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   // Actualización de las variables de estado
   if (sensores.superficie[0] == 'D')
     tiene_zapatillas = true;
-  
-    char i = ViablePorAlturaI(sensores.superficie[1],sensores.cota[1]-sensores.cota[0],tiene_zapatillas);
-    char c = ViablePorAlturaI(sensores.superficie[2],sensores.cota[2]-sensores.cota[0],tiene_zapatillas);
-    char d = ViablePorAlturaI(sensores.superficie[3],sensores.cota[3]-sensores.cota[0],tiene_zapatillas); //hipótesis: los caminos pueden cambiar de cota
 
+  char i = ViablePorAlturaI(sensores.superficie[1], sensores.cota[1] - sensores.cota[0], tiene_zapatillas);
+  char c = ViablePorAlturaI(sensores.superficie[2], sensores.cota[2] - sensores.cota[0], tiene_zapatillas);
+  char d = ViablePorAlturaI(sensores.superficie[3], sensores.cota[3] - sensores.cota[0], tiene_zapatillas); // hipótesis: los caminos pueden cambiar de cota
 
-    ubicacion actual={sensores.posF,sensores.posC,sensores.rumbo};
-    ubicacion Alante = Delante(actual);
-    int pos = VeoCasillaInteresanteII(i, c, d, tiene_zapatillas,mapa_visitado[{Alante.f,Alante.c}]);
+  ubicacion actual = {sensores.posF, sensores.posC, sensores.rumbo};
+  ubicacion Alante = Delante(actual);
 
-    switch (pos)
-    {
-      case 2:
-        accion = WALK;
-        break;
-      case 1:
-        accion = TURN_SL;
-        break;
-      case 3:
-        accion = TURN_SR;
-        break;
-      default:
-        accion = TURN_SL;
-        break;
-    }
+  vector<pair<ubicacion, Action>> candidatas;
 
-    if(sensores.agentes[2] == 't') {//si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
-    giros_forzados = 1;
+  if (c == 'C' || c == 'S' || (tiene_zapatillas && c == 'D'))
+    candidatas.push_back({Alante, WALK});
+  if (i == 'C' || i == 'S' || (tiene_zapatillas && i == 'D'))
+    candidatas.push_back({Izquierda(actual), TURN_SL});
+  if (d == 'C' || d == 'S' || (tiene_zapatillas && d == 'D'))
+    candidatas.push_back({Derecha(actual), TURN_SR});
+
+  if (sensores.agentes[2] == 't')
+  { // si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
+    giros_forzados = 2;
     accion = TURN_SL;
     last_action = accion;
     return accion;
   }
 
+  // Para elegir la de menos visitas
+  int menor = 2147483647; // maximo valor de int
+  for (auto x : candidatas)
+  {
+    cout << "cand= " << x.second << endl;
+    if (mapa_visitado[{x.first.f, x.first.c}] < menor)
+    {
+      accion = x.second;
+      menor = mapa_visitado[{x.first.f, x.first.c}];
+    }
+    else if (mapa_visitado[{x.first.f, x.first.c}] == menor && x.second == WALK)
+    {
+      accion = x.second;
+    }
+  }
+  if (candidatas.empty())
+  {
+    giros_forzados = 2;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
 
+  if (last_action == WALK)
+  {
+    mapa_visitado[{actual.f, actual.c}]++;
+  }
+  cout << "i=" << i << " c=" << c << " d=" << d << " accion=" << accion << " candidatas=" << candidatas.size() << endl;
   last_action = accion;
   return accion;
 }

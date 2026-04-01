@@ -148,6 +148,10 @@ protected:
    */
   ubicacion Delante(const ubicacion &actual) const;
 
+  ubicacion Izquierda(const ubicacion &actual) const;
+
+  ubicacion Derecha(const ubicacion &actual) const;
+
   bool es_camino(unsigned char c) const;
 
   /**

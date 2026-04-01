@@ -113,14 +113,86 @@ bool ComportamientoTecnico::es_camino(unsigned char c) const {
   return (c == 'C' || c == 'D' || c == 'U');
 }
 
+int VeoCasillaInteresanteII(char i, char c, char d){
 
+  if (c == 'C' || c == 'S') return 2;
+  else if (i == 'C' || i == 'S') return 1;
+  else if (d == 'C' || d == 'S') return 3;
+  else return 0;
+}
 /**
  * @brief Comportamiento reactivo del técnico para el Nivel 1.
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
-  return IDLE;
+
+  Action accion = IDLE;
+  ActualizarMapa(sensores);
+  if(giros_forzados > 0){
+    giros_forzados--;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
+
+  // Actualización de las variables de estado
+  if (sensores.superficie[0] == 'D')
+    tiene_zapatillas = true;
+  
+    char i = ViablePorAlturaI(sensores.superficie[1],sensores.cota[1]-sensores.cota[0]);
+    char c = ViablePorAlturaI(sensores.superficie[2],sensores.cota[2]-sensores.cota[0]);
+    char d = ViablePorAlturaI(sensores.superficie[3],sensores.cota[3]-sensores.cota[0]);
+    
+    ubicacion actual={sensores.posF,sensores.posC,sensores.rumbo};
+    ubicacion Alante = Delante(actual);
+
+    vector<pair<ubicacion,Action>> candidatas;
+
+    if(i == 'C' || i == 'S' || (tiene_zapatillas && i == 'D')) candidatas.push_back({Izquierda(actual),TURN_SL});
+    if(c == 'C' || c == 'S' || (tiene_zapatillas && c == 'D')) candidatas.push_back({Alante,WALK});
+    if(d == 'C' || d == 'S' || (tiene_zapatillas && d == 'D')) candidatas.push_back({Derecha(actual),TURN_SR});
+
+
+    //Para elegir la de menos visitas
+    int menor = 2147483647; //maximo valor de int
+    for(auto x : candidatas){
+      if(mapa_visitado[{x.first.f,x.first.c}] < menor){
+       accion = x.second;
+       menor = mapa_visitado[{x.first.f,x.first.c}];
+      }
+      else if(mapa_visitado[{x.first.f,x.first.c}] == menor && x.second == WALK){
+        accion = x.second;
+      }
+    }
+
+    if(candidatas.empty()){
+      vector<pair<ubicacion,Action>> candidatas_no_prioritarias;
+      if(i != 'B' && i != 'A' && i != 'P' && i != 'M') candidatas_no_prioritarias.push_back({Izquierda(actual),TURN_SL});
+      if(c != 'B' && c != 'A' && c != 'P' && c != 'M') candidatas_no_prioritarias.push_back({Alante,WALK});
+      if(d != 'B' && d != 'A' && d != 'P' && d != 'M') candidatas_no_prioritarias.push_back({Derecha(actual),TURN_SR});
+      int menor2 = 2147483647; //maximo valor de int
+      for(auto x : candidatas_no_prioritarias){
+        if(mapa_visitado[{x.first.f,x.first.c}] < menor2){
+          accion = x.second;
+          menor2 = mapa_visitado[{x.first.f,x.first.c}];
+        }
+        else if(mapa_visitado[{x.first.f,x.first.c}] == menor2 && x.second == WALK){
+          accion = x.second;
+      }
+      }
+
+      if(candidatas_no_prioritarias.empty()){
+        giros_forzados = 3;
+        accion = TURN_SL;
+      }
+    }
+
+  if(last_action == WALK){
+    mapa_visitado[{actual.f,actual.c}]++;
+  }
+  last_action = accion;
+  return accion;
 }
 
 /**
@@ -373,6 +445,23 @@ bool ComportamientoTecnico::EsAccesiblePorAltura(const ubicacion &actual) {
   return true;
 }
 
+ubicacion ComportamientoTecnico::Izquierda(const ubicacion &actual) const
+{
+  //vamos a aprovechar la función Delante que tenemos, voy a calcular el rumbo
+  //Nuevo, sabiendo que girar 90º es restarle 2 (en mod 8, porque se divide en giros de 45º)
+  //El casteo cambia 0 por norte, 1 noroeste...
+  ubicacion izq = {actual.f, actual.c, actual.brujula};
+  izq.brujula = static_cast<Orientacion>((actual.brujula + 6) % 8); // +6 = -2 mod 8
+  return Delante(izq);
+
+}
+
+ubicacion ComportamientoTecnico::Derecha(const ubicacion &actual) const
+{
+  ubicacion der = {actual.f,actual.c,actual.brujula};
+  der.brujula = static_cast<Orientacion>((actual.brujula + 2) % 8);
+  return Delante(der);
+}
 /**
  * @brief Devuelve la posición (fila, columna) de la casilla que hay delante del agente.
  * Calcula la casilla frontal según la orientación actual (8 direcciones).

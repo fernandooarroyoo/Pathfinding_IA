@@ -5,6 +5,7 @@
 #include <time.h>
 #include <thread>
 #include <list>
+#include <map>
 
 #include "comportamientos/comportamiento.hpp"
 
@@ -150,6 +151,8 @@ protected:
    */
   bool EsAccesiblePorAltura(const ubicacion &actual);
 
+  ubicacion Izquierda(const ubicacion &actual) const;
+  ubicacion Derecha(const ubicacion &actual) const;
   /**
    * @brief Devuelve la posición (fila, columna) de la casilla que hay delante del agente.
    * @param actual Estado actual del agente (fila, columna, orientacion).
@@ -193,6 +196,8 @@ private:
   Action last_action;
   bool tiene_zapatillas;
   int giro45Izq;
+  int giros_forzados = 0;
+  map<pair<int,int>,int> mapa_visitado;
 
   
 };
