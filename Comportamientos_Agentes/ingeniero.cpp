@@ -216,11 +216,11 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 
   vector<pair<ubicacion, Action>> candidatas;
 
-  if (c == 'C' || c == 'S' || (tiene_zapatillas && c == 'D'))
+  if (c == 'C' || c == 'S' || c == 'U' || (tiene_zapatillas && c == 'D'))
     candidatas.push_back({Alante, WALK});
-  if (i == 'C' || i == 'S' || (tiene_zapatillas && i == 'D'))
+  if (i == 'C' || i == 'S' || i == 'U' || (tiene_zapatillas && i == 'D'))
     candidatas.push_back({Izquierda(actual), TURN_SL});
-  if (d == 'C' || d == 'S' || (tiene_zapatillas && d == 'D'))
+  if (d == 'C' || d == 'S' || d == 'U' || (tiene_zapatillas && d == 'D'))
     candidatas.push_back({Derecha(actual), TURN_SR});
 
   if (sensores.agentes[2] == 't')
@@ -230,6 +230,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     last_action = accion;
     return accion;
   }
+
+  for (auto x : candidatas)
+    cout << "cand=" << x.second << " visitas=" << mapa_visitado[{x.first.f, x.first.c}] << endl;
 
   // Para elegir la de menos visitas
   int menor = 2147483647; // maximo valor de int
@@ -254,10 +257,14 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     return accion;
   }
 
-  if (last_action == WALK)
-  {
-    mapa_visitado[{actual.f, actual.c}]++;
-  }
+  // se actualiza la casilla visitada en función de la acción que se vaya a
+  ubicacion destino = Alante;
+  if (accion == TURN_SL)
+    destino = Izquierda(actual);
+  else if (accion == TURN_SR)
+    destino = Derecha(actual);
+  mapa_visitado[{destino.f, destino.c}]++;
+
   cout << "i=" << i << " c=" << c << " d=" << d << " accion=" << accion << " candidatas=" << candidatas.size() << endl;
   last_action = accion;
   return accion;

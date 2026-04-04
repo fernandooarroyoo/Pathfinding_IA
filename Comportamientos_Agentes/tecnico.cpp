@@ -129,7 +129,8 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
 
   Action accion = IDLE;
   ActualizarMapa(sensores);
-  if(giros_forzados > 0){
+  if (giros_forzados > 0)
+  {
     giros_forzados--;
     accion = TURN_SL;
     last_action = accion;
@@ -139,58 +140,60 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
   // Actualización de las variables de estado
   if (sensores.superficie[0] == 'D')
     tiene_zapatillas = true;
-  
-    char i = ViablePorAlturaI(sensores.superficie[1],sensores.cota[1]-sensores.cota[0]);
-    char c = ViablePorAlturaI(sensores.superficie[2],sensores.cota[2]-sensores.cota[0]);
-    char d = ViablePorAlturaI(sensores.superficie[3],sensores.cota[3]-sensores.cota[0]);
-    
-    ubicacion actual={sensores.posF,sensores.posC,sensores.rumbo};
-    ubicacion Alante = Delante(actual);
 
-    vector<pair<ubicacion,Action>> candidatas;
+  char i = ViablePorAlturaI(sensores.superficie[1], sensores.cota[1] - sensores.cota[0]);
+  char c = ViablePorAlturaI(sensores.superficie[2], sensores.cota[2] - sensores.cota[0]);
+  char d = ViablePorAlturaI(sensores.superficie[3], sensores.cota[3] - sensores.cota[0]); // hipótesis: los caminos pueden cambiar de cota
 
-    if(i == 'C' || i == 'S' || (tiene_zapatillas && i == 'D')) candidatas.push_back({Izquierda(actual),TURN_SL});
-    if(c == 'C' || c == 'S' || (tiene_zapatillas && c == 'D')) candidatas.push_back({Alante,WALK});
-    if(d == 'C' || d == 'S' || (tiene_zapatillas && d == 'D')) candidatas.push_back({Derecha(actual),TURN_SR});
+  ubicacion actual = {sensores.posF, sensores.posC, sensores.rumbo};
+  ubicacion Alante = Delante(actual);
 
+  vector<pair<ubicacion, Action>> candidatas;
 
-    //Para elegir la de menos visitas
-    int menor = 2147483647; //maximo valor de int
-    for(auto x : candidatas){
-      if(mapa_visitado[{x.first.f,x.first.c}] < menor){
-       accion = x.second;
-       menor = mapa_visitado[{x.first.f,x.first.c}];
-      }
-      else if(mapa_visitado[{x.first.f,x.first.c}] == menor && x.second == WALK){
-        accion = x.second;
-      }
-    }
+  if (c == 'C' || c == 'S' || c == 'U')
+    candidatas.push_back({Alante, WALK});
+  if (i == 'C' || i == 'S' || i == 'U')
+    candidatas.push_back({Izquierda(actual), TURN_SL});
+  if (d == 'C' || d == 'S' || d == 'U')
+    candidatas.push_back({Derecha(actual), TURN_SR});
 
-    if(candidatas.empty()){
-      vector<pair<ubicacion,Action>> candidatas_no_prioritarias;
-      if(i != 'B' && i != 'A' && i != 'P' && i != 'M') candidatas_no_prioritarias.push_back({Izquierda(actual),TURN_SL});
-      if(c != 'B' && c != 'A' && c != 'P' && c != 'M') candidatas_no_prioritarias.push_back({Alante,WALK});
-      if(d != 'B' && d != 'A' && d != 'P' && d != 'M') candidatas_no_prioritarias.push_back({Derecha(actual),TURN_SR});
-      int menor2 = 2147483647; //maximo valor de int
-      for(auto x : candidatas_no_prioritarias){
-        if(mapa_visitado[{x.first.f,x.first.c}] < menor2){
-          accion = x.second;
-          menor2 = mapa_visitado[{x.first.f,x.first.c}];
-        }
-        else if(mapa_visitado[{x.first.f,x.first.c}] == menor2 && x.second == WALK){
-          accion = x.second;
-      }
-      }
-
-      if(candidatas_no_prioritarias.empty()){
-        giros_forzados = 3;
-        accion = TURN_SL;
-      }
-    }
-
-  if(last_action == WALK){
-    mapa_visitado[{actual.f,actual.c}]++;
+  if (sensores.agentes[2] == 't')
+  { // si se encuentra a un técnico de cara lo fuerzo a girar para ir por otro sitio
+    giros_forzados = 2;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
   }
+
+  // Para elegir la de menos visitas
+  int menor = 2147483647; // maximo valor de int
+  for (auto x : candidatas)
+  {
+    if (mapa_visitado[{x.first.f, x.first.c}] < menor)
+    {
+      accion = x.second;
+      menor = mapa_visitado[{x.first.f, x.first.c}];
+    }
+    else if (mapa_visitado[{x.first.f, x.first.c}] == menor && x.second == WALK)
+    {
+      accion = x.second;
+    }
+  }
+  if (candidatas.empty())
+  {
+    giros_forzados = 2;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
+
+  ubicacion destino = Alante;
+  if (accion == TURN_SL)
+    destino = Izquierda(actual);
+  else if (accion == TURN_SR)
+    destino = Derecha(actual);
+  mapa_visitado[{destino.f, destino.c}]++;
+
   last_action = accion;
   return accion;
 }
