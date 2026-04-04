@@ -181,7 +181,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
   }
   if (candidatas.empty())
   {
-    giros_forzados = 2;
+    giros_forzados = 1;
     accion = TURN_SL;
     last_action = accion;
     return accion;

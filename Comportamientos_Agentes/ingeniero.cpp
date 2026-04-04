@@ -216,11 +216,11 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 
   vector<pair<ubicacion, Action>> candidatas;
 
-  if (c == 'C' || c == 'S' || c == 'U' || (tiene_zapatillas && c == 'D'))
+  if (c == 'C' || c == 'S' || c == 'U' ||  c == 'D' || c == 'X')
     candidatas.push_back({Alante, WALK});
-  if (i == 'C' || i == 'S' || i == 'U' || (tiene_zapatillas && i == 'D'))
+  if (i == 'C' || i == 'S' || i == 'U' ||  i == 'D' || i == 'X')
     candidatas.push_back({Izquierda(actual), TURN_SL});
-  if (d == 'C' || d == 'S' || d == 'U' || (tiene_zapatillas && d == 'D'))
+  if (d == 'C' || d == 'S' || d == 'U' || d == 'D' || i == 'X')
     candidatas.push_back({Derecha(actual), TURN_SR});
 
   if (sensores.agentes[2] == 't')
@@ -231,14 +231,10 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     return accion;
   }
 
-  for (auto x : candidatas)
-    cout << "cand=" << x.second << " visitas=" << mapa_visitado[{x.first.f, x.first.c}] << endl;
-
   // Para elegir la de menos visitas
   int menor = 2147483647; // maximo valor de int
   for (auto x : candidatas)
   {
-    cout << "cand= " << x.second << endl;
     if (mapa_visitado[{x.first.f, x.first.c}] < menor)
     {
       accion = x.second;
@@ -251,7 +247,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   }
   if (candidatas.empty())
   {
-    giros_forzados = 2;
+    giros_forzados = 1;
     accion = TURN_SL;
     last_action = accion;
     return accion;
@@ -265,7 +261,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     destino = Derecha(actual);
   mapa_visitado[{destino.f, destino.c}]++;
 
-  cout << "i=" << i << " c=" << c << " d=" << d << " accion=" << accion << " candidatas=" << candidatas.size() << endl;
   last_action = accion;
   return accion;
 }
