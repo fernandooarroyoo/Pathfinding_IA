@@ -219,7 +219,7 @@ protected:
  * @return La secuencia de acciones para llegar al estado final
  * @note Devuelve un plan vacío si no es posible encontrar un plan válido
  */
-list<Action> B_Anchura(const EstadoT& inicio, const EstadoT& final, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura);
+list<Action> B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
 
 private:
