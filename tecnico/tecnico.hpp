@@ -5,7 +5,6 @@
 #include <time.h>
 #include <thread>
 #include <list>
-#include <map>
 
 #include "comportamientos/comportamiento.hpp"
 
@@ -21,23 +20,6 @@
  */
 
 
-struct EstadoT{
-  ubicacion site;
-  bool zapatillas;
-
-  bool operator==(const EstadoT &st) const{
-    return site == st.site and zapatillas == st.zapatillas;
-  }
-};
-
-struct NodoT{
-  EstadoT estado;
-  list<Action> secuencia;
-
-  bool operator==(const NodoT& node) const{
-    return estado == node.estado;
-  }
-};
 
 class ComportamientoTecnico : public Comportamiento {
 public:
@@ -53,7 +35,6 @@ public:
     // Inicializar Variables de Estado
     last_action = IDLE;
     tiene_zapatillas = false;
-    giro45Izq = 0;
   }
 
   /**
@@ -102,8 +83,6 @@ public:
  * @return Acción a realizar.
  */
   Action ComportamientoTecnicoNivel_1(Sensores sensores);
-
-  Action ComportamientoTecnicoNivel_E(Sensores sensores);
   
 /**
  * @brief Comportamiento del técnico para el Nivel 2.
@@ -140,6 +119,14 @@ public:
  */
   Action ComportamientoTecnicoNivel_6(Sensores sensores);
 
+
+  /**
+ * @brief Comportamiento del técnico para el Nivel E (especial tutorial parte 2).
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_E(Sensores sensores);
+
 protected:
   // =========================================================================
   // FUNCIONES PROPORCIONADAS
@@ -170,8 +157,6 @@ protected:
    */
   bool EsAccesiblePorAltura(const ubicacion &actual);
 
-  ubicacion Izquierda(const ubicacion &actual) const;
-  ubicacion Derecha(const ubicacion &actual) const;
   /**
    * @brief Devuelve la posición (fila, columna) de la casilla que hay delante del agente.
    * @param actual Estado actual del agente (fila, columna, orientacion).
@@ -208,33 +193,18 @@ protected:
  */
   void VisualizaPlan(const ubicacion &st, const list<Action> &plan);
 
-/**
- * @brief Primera aproximacion a la búsqueda de anchira
- * 
- * @param inicio Estado inicial de la busqueda
- * @param final Estado final de la busqueda
- * @param terreno Matriz que contiene informacion del terreno
- * @param altura Matriz que contiene la altura del mapa
- * 
- * @return La secuencia de acciones para llegar al estado final
- * @note Devuelve un plan vacío si no es posible encontrar un plan válido
- */
-list<Action> B_Anchura(const EstadoT& inicio, const EstadoT& final, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura);
-
-
 private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
-  Action last_action;
-  bool tiene_zapatillas;
-  int giro45Izq;
-  int giros_forzados = 0;
-  map<pair<int,int>,int> mapa_visitado;
 
-  //nivel E
-  bool hayPlan;
-  list<Action> plan;
+
+Action last_action;      // Almacena la última acción ejecutada
+bool tiene_zapatillas;   // Indica si el agente tiene las zapatillas
+
+//Nivel E
+bool hayPlan;            // Indica si hay una plan que ejecutar
+list<Action> plan;       // Almacena el plan a realizar.
 };
 
 #endif

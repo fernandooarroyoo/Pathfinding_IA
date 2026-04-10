@@ -275,6 +275,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
 {
   // TODO: Implementar búsqueda para el Nivel 2.
   return IDLE;
+
+
+  
 }
 
 /**
