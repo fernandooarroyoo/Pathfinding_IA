@@ -66,6 +66,9 @@ public:
                        Comportamiento(mapaR, mapaC) {
     // Inicializar Variables de Estado
     hayPlan = false;
+    last_action = IDLE;
+    giro45Izq = 0;
+    tiene_zapatillas = false;
   }
 
   ComportamientoTecnico(const ComportamientoTecnico &comport): Comportamiento(comport) {}
