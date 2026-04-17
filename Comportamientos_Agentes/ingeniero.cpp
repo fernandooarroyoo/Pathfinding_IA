@@ -266,6 +266,90 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 }
 
 // Niveles avanzados (Uso de búsqueda)
+/*
+//Funciones necesarias para la busqueda en anchura.
+
+EstadoT NextCasillaTecnico(const EstadoT &st)
+{
+  EstadoT siguiente = st;
+  switch (st.site.brujula)
+  {
+  case norte:
+    siguiente.site.f = st.site.f - 1;
+    break;
+  case noreste:
+    siguiente.site.f = st.site.f - 1;
+    siguiente.site.c = st.site.c + 1;
+    break;
+  case este:
+    siguiente.site.c = st.site.c + 1;
+    break;
+  case sureste:
+    siguiente.site.f = st.site.f + 1;
+    siguiente.site.c = st.site.c + 1;
+    break;
+  case sur:
+    siguiente.site.f = st.site.f + 1;
+    break;
+  case suroeste:
+    siguiente.site.f = st.site.f + 1;
+    siguiente.site.c = st.site.c - 1;
+    break;
+  case oeste:
+    siguiente.site.c = st.site.c - 1;
+    break;
+  case noroeste:
+    siguiente.site.f = st.site.f - 1;
+    siguiente.site.c = st.site.c - 1;
+  }
+  return siguiente;
+}
+
+bool CasillaAccesibleTecnico(const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
+{
+  EstadoT next = NextCasillaTecnico(st);
+  bool check1 = false, check2 = false, check3 = false;
+  check1 = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M';
+  check2 = terreno[next.site.f][next.site.c] != 'B' or (terreno[next.site.f][next.site.c] == 'B' and st.zapatillas);
+  check3 = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]) <= 1;
+  return check1 and check2 and check3;
+}
+
+EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
+{
+  EstadoT next = st;
+  switch (accion)
+  {
+  case WALK:
+    if (CasillaAccesibleTecnico(st, terreno, altura))
+    {
+      next = NextCasillaTecnico(st);
+    }
+    break;
+  case TURN_SR:
+    next.site.brujula = (Orientacion)((next.site.brujula + 1) % 8);
+    break;
+  case TURN_SL:
+    next.site.brujula = (Orientacion)((next.site.brujula + 7) % 8);
+    break;
+  }
+  return next;
+}
+
+bool Find(const NodoT &st, const list<NodoT> &lista)
+{
+  auto it = lista.begin();
+  while (it != lista.end() and !((*it) == st))
+  {
+    it++;
+  }
+  return (it != lista.end());
+}
+
+
+
+*/
+
 /**
  * @brief Comportamiento del ingeniero para el Nivel 2 (búsqueda).
  * @param sensores Datos actuales de los sensores.

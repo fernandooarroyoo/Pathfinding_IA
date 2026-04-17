@@ -9,6 +9,43 @@
 #include <time.h>
 
 #include "comportamientos/comportamiento.hpp"
+/*
+struct EstadoT
+{
+  ubicacion site;
+  bool zapatillas;
+
+  bool operator==(const EstadoT &st) const
+  {
+    return site == st.site and zapatillas == st.zapatillas;
+  }
+};
+
+struct NodoT
+{
+  EstadoT estado;
+  list<Action> secuencia;
+
+  bool operator==(const NodoT &node) const
+  {
+    return estado == node.estado;
+  }
+
+  bool operator<(const NodoT &node) const
+  {
+    if (estado.site.f < node.estado.site.f)
+      return true;
+    else if (estado.site.f == node.estado.site.f and estado.site.c < node.estado.site.c)
+      return true;
+    else if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula < node.estado.site.brujula)
+      return true;
+    else if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula == node.estado.site.brujula and estado.zapatillas < node.estado.zapatillas)
+      return true;
+    else
+      return false;
+  }
+};
+*/
 
 class ComportamientoIngeniero : public Comportamiento {
 public:
@@ -193,10 +230,13 @@ private:
   Action last_action;
   bool tiene_zapatillas;
   int giro45Izq;
-  int giros_forzados; //variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
+  int giros_forzados = 0; //variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
 
   map<pair<int,int>,int> mapa_visitado; //guardar las veces que hemos visitado una casilla, para el nivel 1.
   
+
+  bool hayPlan;
+  list<Action> plan;
 };
 
 #endif
