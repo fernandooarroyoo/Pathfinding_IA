@@ -216,9 +216,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 
   vector<pair<ubicacion, Action>> candidatas;
 
-  if (c == 'C' || c == 'S' || c == 'U' ||  c == 'D' || c == 'X')
+  if (c == 'C' || c == 'S' || c == 'U' || c == 'D' || c == 'X')
     candidatas.push_back({Alante, WALK});
-  if (i == 'C' || i == 'S' || i == 'U' ||  i == 'D' || i == 'X')
+  if (i == 'C' || i == 'S' || i == 'U' || i == 'D' || i == 'X')
     candidatas.push_back({Izquierda(actual), TURN_SL});
   if (d == 'C' || d == 'S' || d == 'U' || d == 'D' || i == 'X')
     candidatas.push_back({Derecha(actual), TURN_SR});
@@ -266,10 +266,10 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 }
 
 // Niveles avanzados (Uso de búsqueda)
-/*
-//Funciones necesarias para la busqueda en anchura.
 
-EstadoT NextCasillaTecnico(const EstadoT &st)
+// Funciones necesarias para la busqueda en anchura.
+
+EstadoT NextCasillaIngeniero(const EstadoT &st)
 {
   EstadoT siguiente = st;
   switch (st.site.brujula)
@@ -305,34 +305,69 @@ EstadoT NextCasillaTecnico(const EstadoT &st)
   return siguiente;
 }
 
-bool CasillaAccesibleTecnico(const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
+bool CasillaAccesibleIngeniero(const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
 {
-  EstadoT next = NextCasillaTecnico(st);
-  bool check1 = false, check2 = false, check3 = false;
-  check1 = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M';
-  check2 = terreno[next.site.f][next.site.c] != 'B' or (terreno[next.site.f][next.site.c] == 'B' and st.zapatillas);
-  check3 = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]) <= 1;
-  return check1 and check2 and check3;
+  EstadoT next = NextCasillaIngeniero(st);
+
+  bool transitable = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M' and
+                     terreno[next.site.f][next.site.c] != 'B';
+
+  int dif_altura = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]);
+  bool check_altura = st.zapatillas ? (dif_altura <= 2) : (dif_altura <= 1);
+
+  return transitable && check_altura;
 }
 
 EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
 {
-  EstadoT next = st;
+ EstadoT next = st;
+  EstadoT intermedia; //para comprobar si el salto es válido
+  int dif_altura;
+  
   switch (accion)
   {
   case WALK:
-    if (CasillaAccesibleTecnico(st, terreno, altura))
+    if (CasillaAccesibleIngeniero(st, terreno, altura))
     {
-      next = NextCasillaTecnico(st);
+      next = NextCasillaIngeniero(st);
     }
     break;
+
+  case JUMP:
+    //casilla intermedia
+    intermedia = NextCasillaIngeniero(st);
+    
+    //no podemos saltar en medio de un precipicio, por ejemplo
+    if (terreno[intermedia.site.f][intermedia.site.c] != 'P' && 
+        terreno[intermedia.site.f][intermedia.site.c] != 'M' && 
+        terreno[intermedia.site.f][intermedia.site.c] != 'B') 
+    {
+       
+        EstadoT destino = NextCasillaIngeniero(intermedia);
+        
+        bool transitable_destino = terreno[destino.site.f][destino.site.c] != 'P' && 
+                                   terreno[destino.site.f][destino.site.c] != 'M' && 
+                                   terreno[destino.site.f][destino.site.c] != 'B';
+                                   
+       
+        dif_altura = abs(altura[destino.site.f][destino.site.c] - altura[st.site.f][st.site.c]);
+        bool check_altura_destino = st.zapatillas ? (dif_altura <= 2) : (dif_altura <= 1);
+        
+        if (transitable_destino && check_altura_destino) {
+            next = destino; 
+        }
+    }
+    break;
+
   case TURN_SR:
     next.site.brujula = (Orientacion)((next.site.brujula + 1) % 8);
     break;
+    
   case TURN_SL:
     next.site.brujula = (Orientacion)((next.site.brujula + 7) % 8);
     break;
   }
+  
   return next;
 }
 
@@ -346,9 +381,77 @@ bool Find(const NodoT &st, const list<NodoT> &lista)
   return (it != lista.end());
 }
 
+list<Action> ComportamientoIngeniero::B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
+{
+  NodoT current_node;
+  queue<NodoT> frontier;
+  set<NodoT> explored;
 
+  current_node.estado = inicio;
 
-*/
+  // comprobacion inicial
+  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
+  {
+    return list<Action>();
+  }
+  // comprobamos si nacemos en unas zapatillas
+  if (terreno[current_node.estado.site.f][current_node.estado.site.c] == 'D')
+  {
+    current_node.estado.zapatillas = true;
+  }
+
+  frontier.push(current_node);
+  explored.insert(current_node);
+
+  // Las 4 acciones permitidas en el lv2
+  Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL};
+
+  while (!frontier.empty())
+  {
+    current_node = frontier.front();
+    frontier.pop();
+
+    for (Action accion : posibles_acciones)
+    {
+      NodoT child = current_node;
+
+      child.estado = applyT(accion, current_node.estado, terreno, altura);
+
+      // si el hijo no ha hecho nada, lo ignoro
+      if (child.estado.site.f == current_node.estado.site.f and
+          child.estado.site.c == current_node.estado.site.c and
+          child.estado.site.brujula == current_node.estado.site.brujula)
+      {
+        continue;
+      }
+
+      // compruebo si estoy en un sitio de zapatillas
+      if (terreno[child.estado.site.f][child.estado.site.c] == 'D')
+      {
+        child.estado.zapatillas = true;
+      }
+
+      // registramos en la secuencia
+      child.secuencia.push_back(accion);
+
+      // compruebo si he llegado a la meta
+      if (child.estado.site.f == final.site.f && child.estado.site.c == final.site.c)
+      {
+        return child.secuencia; // ¡Encontrado el camino más corto en instantes!
+      }
+
+      // miro si esta explorado, y lo meto en la cola frontier
+      if (explored.find(child) == explored.end())
+      {
+        explored.insert(child);
+        frontier.push(child);
+      }
+    }
+  }
+
+  // si no hemos encontrado nada, devolvemos una lista vacia
+  return list<Action>();
+}
 
 /**
  * @brief Comportamiento del ingeniero para el Nivel 2 (búsqueda).
@@ -358,10 +461,31 @@ bool Find(const NodoT &st, const list<NodoT> &lista)
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores)
 {
   // TODO: Implementar búsqueda para el Nivel 2.
-  return IDLE;
+  Action accion = IDLE;
+  if (!hayPlan)
+  {
+    EstadoT inicio, fin;
+    inicio.site.f = sensores.posF;
+    inicio.site.c = sensores.posC;
+    inicio.site.brujula = sensores.rumbo;
+    inicio.zapatillas = tiene_zapatillas;
+    fin.site.f = sensores.BelPosF;
+    fin.site.c = sensores.BelPosC;
+    plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+    VisualizaPlan(inicio.site, plan);
+    hayPlan = plan.size() != 0;
+  }
 
-
-  
+  if (hayPlan and plan.size() > 0)
+  {
+    accion = plan.front();
+    plan.pop_front();
+  }
+  if (plan.size() == 0)
+  {
+    hayPlan = false;
+  }
+  return accion;
 }
 
 /**

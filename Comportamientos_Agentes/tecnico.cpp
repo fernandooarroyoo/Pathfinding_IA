@@ -69,10 +69,10 @@ Action ComportamientoTecnico::think(Sensores sensores)
   case 2:
     accion = ComportamientoTecnicoNivel_2(sensores);
     break;
-  //case 3: accion = ComportamientoTecnicoNivel_3(sensores); break;
   case 3:
-    accion = ComportamientoTecnicoNivel_E(sensores);
+    accion = ComportamientoTecnicoNivel_3(sensores);
     break;
+  //case 3: accion = ComportamientoTecnicoNivel_E(sensores); break;
   case 4:
     accion = ComportamientoTecnicoNivel_4(sensores);
     break;
@@ -235,7 +235,7 @@ list<Action> AvanzaASaltosDeCaballo()
 }
 
 // FUNCIONES NECESARIAS PARA B_Anchura
-
+/*
 EstadoT NextCasillaTecnico(const EstadoT &st)
 {
   EstadoT siguiente = st;
@@ -480,6 +480,10 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores)
 
   return accion;
 }
+
+*/
+
+
 /**
  * @brief Comportamiento del técnico para el Nivel 2.
  * @param sensores Datos actuales de los sensores.
@@ -487,7 +491,27 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores)
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+  //El comportamiento que tiene que tener es NO estorbar al ingeniero
+
+   if (giros_forzados > 0)
+  {
+    giros_forzados--;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+  }
+   if (sensores.agentes[2] == 'i')
+  { // si se encuentra a un ingeniero de cara lo fuerzo a girar para ir por otro sitio
+    /*giros_forzados = 2;
+    accion = TURN_SL;
+    last_action = accion;
+    return accion;
+    */
+   accion = WALK;  
+    }
+
+  return accion;
 }
 
 /**

@@ -9,7 +9,7 @@
 #include <time.h>
 
 #include "comportamientos/comportamiento.hpp"
-/*
+
 struct EstadoT
 {
   ubicacion site;
@@ -45,7 +45,7 @@ struct NodoT
       return false;
   }
 };
-*/
+
 
 class ComportamientoIngeniero : public Comportamiento {
 public:
@@ -221,6 +221,7 @@ protected:
  */
   void VisualizaRedTuberias(const list<Paso> &plan);
 
+  list<Action> B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
 
 private:
