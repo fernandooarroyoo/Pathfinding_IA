@@ -1044,37 +1044,55 @@ bool MonitorJuego::checkPipeConnection(int startF, int startC) {
     int f = curr.first;
     int c = curr.second;
 
-    if (mapa->getCelda(f, c) == 'U')
-      return true;
+    // Si la casilla actual es el destino FINAL ('U'), hemos tenido éxito.
+    // Solo permitimos esto si NO es la casilla de inicio, o si la casilla de inicio
+    // tiene al menos un bit de tubería puesto (para evitar victorias con 0 tuberías)
+    if (mapa->getCelda(f, c) == 'U') {
+      if (f != startF || c != startC || mapaTuberias[f][c] != 0) {
+        return true;
+      }
+    }
 
     unsigned char mask = mapaTuberias[f][c];
 
-    // Norte (bit 1)
+    // Norte (bit 1) -> Sur (bit 16)
     if ((mask & 1) && f > 0) {
-      if (visited.find({f - 1, c}) == visited.end()) {
-        visited.insert({f - 1, c});
-        q.push({f - 1, c});
+      int nf = f - 1, nc = c;
+      if (visited.find({nf, nc}) == visited.end()) {
+        if (mapa->getCelda(nf, nc) == 'U' || (mapaTuberias[nf][nc] & 16)) {
+          visited.insert({nf, nc});
+          q.push({nf, nc});
+        }
       }
     }
-    // Este (bit 4)
+    // Este (bit 4) -> Oeste (bit 64)
     if ((mask & 4) && c < (int)mapa->getNCols() - 1) {
-      if (visited.find({f, c + 1}) == visited.end()) {
-        visited.insert({f, c + 1});
-        q.push({f, c + 1});
+      int nf = f, nc = c + 1;
+      if (visited.find({nf, nc}) == visited.end()) {
+        if (mapa->getCelda(nf, nc) == 'U' || (mapaTuberias[nf][nc] & 64)) {
+          visited.insert({nf, nc});
+          q.push({nf, nc});
+        }
       }
     }
-    // Sur (bit 16)
+    // Sur (bit 16) -> Norte (bit 1)
     if ((mask & 16) && f < (int)mapa->getNFils() - 1) {
-      if (visited.find({f + 1, c}) == visited.end()) {
-        visited.insert({f + 1, c});
-        q.push({f + 1, c});
+      int nf = f + 1, nc = c;
+      if (visited.find({nf, nc}) == visited.end()) {
+        if (mapa->getCelda(nf, nc) == 'U' || (mapaTuberias[nf][nc] & 1)) {
+          visited.insert({nf, nc});
+          q.push({nf, nc});
+        }
       }
     }
-    // Oeste (bit 64)
+    // Oeste (bit 64) -> Este (bit 4)
     if ((mask & 64) && c > 0) {
-      if (visited.find({f, c - 1}) == visited.end()) {
-        visited.insert({f, c - 1});
-        q.push({f, c - 1});
+      int nf = f, nc = c - 1;
+      if (visited.find({nf, nc}) == visited.end()) {
+        if (mapa->getCelda(nf, nc) == 'U' || (mapaTuberias[nf][nc] & 4)) {
+          visited.insert({nf, nc});
+          q.push({nf, nc});
+        }
       }
     }
   }
@@ -1106,45 +1124,61 @@ bool MonitorJuego::checkLevel4() {
   // Comprobación de inicio en la casilla de la Belkanita (objetivo)
   int objF = -1, objC = -1;
   get_n_active_objetivo(0, objF, objC);
-  auto it = plan.begin();
-  if (it->fil != objF or it->col != objC) {
-    stringstream ss;
-    ss << "Error Nivel 4: El plan debe comenzar en la casilla de la Belkanita (" 
-       << objF << "," << objC << ").";
-    addMensaje("Sistema", ss.str());
-    return false;
-  }
+  int curr_f = -1, curr_c = -1;
+  int last_h = -1;
+  bool first = true;
 
-  int last_h = (int)mapa->alturaEnCelda(it->fil, it->col) + it->op;
-  int curr_f = it->fil;
-  int curr_c = it->col;
+  for (auto it = plan.begin(); it != plan.end(); ++it) {
+    unsigned char celda = mapa->getCelda(it->fil, it->col);
+    int h = (int)mapa->alturaEnCelda(it->fil, it->col) + it->op;
 
-  // Avanzar al segundo elemento para comprobar adyacencia y alturas
-  auto it_check = it;
-  ++it_check;
-
-  for (; it_check != plan.end(); ++it_check) {
-    int h = (int)mapa->alturaEnCelda(it_check->fil, it_check->col) + it_check->op;
-
-    // Comprobación de adyacencia
-    int dist = abs(it_check->fil - curr_f) + abs(it_check->col - curr_c);
-    if (dist > 1) {
+    // Comprobación de bosque: intransitable para el ingeniero
+    if (celda == 'B') {
       stringstream ss;
-      ss << "Error Nivel 4: Salto detectado en (" << it_check->fil << "," << it_check->col << ").";
+      ss << "Error Nivel 4: El plan pasa por un bosque en (" << it->fil << "," << it->col << ").";
       addMensaje("Sistema", ss.str());
       return false;
     }
 
-    // Comprobación de consistencia de altura
-    if (!(last_h == h || h == last_h - 1)) {
+    // Comprobación de agua: no se permite DIG/RAISE
+    if (it->op != 0 && celda == 'A') {
       stringstream ss;
-      ss << "Error Nivel 4: Altura inconsistente en (" << it_check->fil << "," << it_check->col << ").";
+      ss << "Error Nivel 4: No se permite " << (it->op == -1 ? "DIG" : "RAISE") 
+         << " en agua en (" << it->fil << "," << it->col << ").";
       addMensaje("Sistema", ss.str());
       return false;
     }
 
-    curr_f = it_check->fil;
-    curr_c = it_check->col;
+    if (first) {
+      if (it->fil != objF or it->col != objC) {
+        stringstream ss;
+        ss << "Error Nivel 4: El plan debe comenzar en la casilla de la Belkanita (" 
+           << objF << "," << objC << ").";
+        addMensaje("Sistema", ss.str());
+        return false;
+      }
+      first = false;
+    } else {
+      // Comprobación de adyacencia
+      int dist = abs(it->fil - curr_f) + abs(it->col - curr_c);
+      if (dist > 1) {
+        stringstream ss;
+        ss << "Error Nivel 4: Salto detectado en (" << it->fil << "," << it->col << ").";
+        addMensaje("Sistema", ss.str());
+        return false;
+      }
+
+      // Comprobación de consistencia de altura
+      if (!(last_h == h || h == last_h - 1)) {
+        stringstream ss;
+        ss << "Error Nivel 4: Altura inconsistente en (" << it->fil << "," << it->col << ").";
+        addMensaje("Sistema", ss.str());
+        return false;
+      }
+    }
+
+    curr_f = it->fil;
+    curr_c = it->col;
     last_h = h;
   }
 
