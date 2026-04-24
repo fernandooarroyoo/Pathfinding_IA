@@ -72,7 +72,7 @@ Action ComportamientoTecnico::think(Sensores sensores)
   case 3:
     accion = ComportamientoTecnicoNivel_3(sensores);
     break;
-  //case 3: accion = ComportamientoTecnicoNivel_E(sensores); break;
+  // case 3: accion = ComportamientoTecnicoNivel_E(sensores); break;
   case 4:
     accion = ComportamientoTecnicoNivel_4(sensores);
     break;
@@ -235,7 +235,7 @@ list<Action> AvanzaASaltosDeCaballo()
 }
 
 // FUNCIONES NECESARIAS PARA B_Anchura
-/*
+
 EstadoT NextCasillaTecnico(const EstadoT &st)
 {
   EstadoT siguiente = st;
@@ -302,7 +302,7 @@ EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned ch
   }
   return next;
 }
-
+/*
 bool Find(const NodoT &st, const list<NodoT> &lista)
 {
   auto it = lista.begin();
@@ -483,63 +483,142 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores)
 
 */
 
-int ComportamientoTecnico::modifica_altura(Action accion, unsigned char terreno, int altura_origen, int altura_destino){
-  if(accion == 'WALK'){
-    if (terreno == 'C' || terreno == 'U' || terreno == 'P' || terreno == 'M') {
-        return 0; 
+int ComportamientoTecnico::modifica_altura(Action accion, unsigned char terreno, int altura_origen, int altura_destino)
+{
+  if (accion == WALK)
+  {
+    if (terreno == 'C' || terreno == 'U' || terreno == 'P' || terreno == 'M')
+    {
+      return 0;
     }
 
-    if(altura_destino > altura_origen){
+    if (altura_destino > altura_origen)
+    {
       return 5;
-    }else if(altura_destino < altura_origen){
+    }
+    else if (altura_destino < altura_origen)
+    {
       return -2;
-    }else{
+    }
+    else
+    {
       return 0;
     }
   }
-  //quedan el resto de acciones
+  else
+  {
+    return 0;
+  }
 }
 
-
-  int ComportamientoTecnico::CalculoEnergia(Action accion, unsigned char terreno){
-    if(accion == 'WALK'){
-      switch (terreno)
-      {
-        case 'A': return 60;
-        case 'H' : return 6;
-        case 'S' : return 3;
-        default : return 1;
-      }
+int ComportamientoTecnico::CalculoEnergia(Action accion, unsigned char terreno)
+{
+  if (accion == WALK)
+  {
+    switch (terreno)
+    {
+    case 'A':
+      return 60;
+    case 'H':
+      return 6;
+    case 'S':
+      return 3;
+    default:
+      return 1;
     }
-    //quedan poner resto de acciones
+  }
+  else if (accion == TURN_SL || accion == TURN_SR)
+  {
+    switch (terreno)
+    {
+    case 'A':
+      return 5;
+    case 'H':
+      return 2;
+    case 'S':
+      return 1;
+    default:
+      return 1;
+    }
+  }
+}
+
+list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
+{
+  NodoT nodo_actual;
+
+  priority_queue<NodoT, vector<NodoT>, std::greater<NodoT>> frontier; // ordenamos de forma ascendente
+  set<NodoT> explored;
+
+  nodo_actual.estado = inicio;
+  nodo_actual.g = 0;
+  nodo_actual.h = 0;
+
+  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
+  {
+    return list<Action>();
   }
 
+  if (terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c] == 'D')
+  {
+    nodo_actual.estado.zapatillas = true;
+  }
 
-list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura){
-  NodoT nodo_actual;
-   
-    priority_queue<NodoT, vector<NodoT>, std::greater<NodoT>> frontier; //ordenamos de forma ascendente
-    set<NodoT> explored;
+  frontier.push(nodo_actual);
+  explored.insert(nodo_actual);
 
-    
-    nodo_actual.estado = inicio;
-    nodo_actual.g = 0;      
-    nodo_actual.h = 0; 
-    
-    if (inicio.site.f == final.site.f && inicio.site.c == final.site.c) {
-        return list<Action>(); 
+  Action posibles_acciones[] = {WALK, TURN_SL, TURN_SR};
+  while (!frontier.empty())
+  {
+    nodo_actual = frontier.top();
+    frontier.pop();
+
+    // objetivo encontrado
+    if (nodo_actual.estado.site.f == final.site.f and nodo_actual.estado.site.c == final.site.c)
+    {
+      return nodo_actual.secuencia;
     }
 
-    if (terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c] == 'D') {
-        nodo_actual.estado.zapatillas = true;
-    }
-
-    frontier.push(nodo_actual);
     explored.insert(nodo_actual);
 
-    // Aquí irá nuestro bucle while (!frontier.empty()) ...
+    for (Action accion : posibles_acciones)
+    {
+      NodoT hijo = nodo_actual;
 
-    return list<Action>();
+      hijo.estado = applyT(accion, nodo_actual.estado, terreno, altura);
+
+      //comprobamos que no se choca contra un muro, para evitar un bucle infinito
+
+      if(accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c){
+        continue; //descartamos al hijo porque el movimiento es ilegal, applyT ha dicho que por ahí no se puede
+      }
+
+      unsigned char terreno_origen = terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
+      int alt_origen = altura[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
+      int alt_destino = altura[hijo.estado.site.f][hijo.estado.site.c];
+
+      int coste = CalculoEnergia(accion, terreno_origen);
+      int mod_altura = modifica_altura(accion, terreno_origen, alt_origen, alt_destino);
+
+      hijo.g = nodo_actual.g + coste + mod_altura;
+
+      // calculo heuristica-> NOTA: No usamos la distancia de Pitágoras porque un movimiento en diagonal le da el valor 1.41, cuando realmente cuesta 1 porque el simulador admite
+      // andar en diagonal => usamos distancia de Chebyshev
+      int d_f = abs(final.site.f - hijo.estado.site.f);
+      int d_c = abs(final.site.c - hijo.estado.site.c);
+
+      hijo.h = max(d_f, d_c);
+
+      hijo.secuencia.push_back(accion);
+
+      if (explored.find(hijo) == explored.end())
+      {
+        frontier.push(hijo);
+      }
+    }
+  }
+
+  return list<Action>();
 }
 
 /**
@@ -550,24 +629,24 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
 {
   Action accion = IDLE;
-  //El comportamiento que tiene que tener es NO estorbar al ingeniero
+  // El comportamiento que tiene que tener es NO estorbar al ingeniero
 
-   if (giros_forzados > 0)
+  if (giros_forzados > 0)
   {
     giros_forzados--;
     accion = TURN_SL;
     last_action = accion;
     return accion;
   }
-   if (sensores.agentes[2] == 'i')
+  if (sensores.agentes[2] == 'i')
   { // si se encuentra a un ingeniero de cara lo fuerzo a girar para ir por otro sitio
     /*giros_forzados = 2;
     accion = TURN_SL;
     last_action = accion;
     return accion;
     */
-   accion = WALK;  
-    }
+    accion = WALK;
+  }
 
   return accion;
 }
@@ -579,7 +658,32 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_3(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+  if(!hayPlan)
+  {
+    EstadoT inicio,fin;
+    inicio.site.f = sensores.posF;
+    inicio.site.c = sensores.posC;
+    inicio.site.brujula = sensores.rumbo;
+    inicio.zapatillas = tiene_zapatillas;
+    fin.site.f = sensores.BelPosF;
+    fin.site.c = sensores.BelPosC;
+    plan = BusquedaEstrella(inicio,fin,mapaResultado,mapaCotas);
+    VisualizaPlan(inicio.site,plan);
+    hayPlan = plan.size() != 0;
+  }
+
+  if(hayPlan and plan.size() > 0)
+  {
+    accion = plan.front();
+    plan.pop_front();
+  }
+
+  if(plan.size() == 0){
+    hayPlan = false;
+  }
+
+  return accion;
 }
 
 /**
