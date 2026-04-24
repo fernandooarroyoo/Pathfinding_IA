@@ -483,8 +483,35 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores)
 
 */
 
+int ComportamientoTecnico::modifica_altura(Action accion, unsigned char terreno, int altura_origen, int altura_destino){
+  if(accion == 'WALK'){
+    if (terreno == 'C' || terreno == 'U' || terreno == 'P' || terreno == 'M') {
+        return 0; 
+    }
+
+    if(altura_destino > altura_origen){
+      return 5;
+    }else if(altura_destino < altura_origen){
+      return -2;
+    }else{
+      return 0;
+    }
+  }
+  //quedan el resto de acciones
+}
+
+
   int ComportamientoTecnico::CalculoEnergia(Action accion, unsigned char terreno){
-    
+    if(accion == 'WALK'){
+      switch (terreno)
+      {
+        case 'A': return 60;
+        case 'H' : return 6;
+        case 'S' : return 3;
+        default : return 1;
+      }
+    }
+    //quedan poner resto de acciones
   }
 
 

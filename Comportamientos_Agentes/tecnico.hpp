@@ -260,6 +260,8 @@ protected:
 
   int CalculoEnergia(Action accion, unsigned char terreno);
 
+  int modifica_altura(Action accion, unsigned char terreno, int altura_origen, int altura_destino);
+
   private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
