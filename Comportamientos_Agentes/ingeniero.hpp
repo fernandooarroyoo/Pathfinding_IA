@@ -10,28 +10,28 @@
 
 #include "comportamientos/comportamiento.hpp"
 
-struct EstadoT
+struct EstadoI
 {
   ubicacion site;
   bool zapatillas;
 
-  bool operator==(const EstadoT &st) const
+  bool operator==(const EstadoI &st) const
   {
     return site == st.site and zapatillas == st.zapatillas;
   }
 };
 
-struct NodoT
+struct NodoI
 {
-  EstadoT estado;
+  EstadoI estado;
   list<Action> secuencia;
 
-  bool operator==(const NodoT &node) const
+  bool operator==(const NodoI &node) const
   {
     return estado == node.estado;
   }
 
-  bool operator<(const NodoT &node) const
+  bool operator<(const NodoI &node) const
   {
     if (estado.site.f < node.estado.site.f)
       return true;
@@ -221,7 +221,7 @@ protected:
  */
   void VisualizaRedTuberias(const list<Paso> &plan);
 
-  list<Action> B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
+  list<Action> B_Anchura(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
 
 private:

@@ -483,6 +483,37 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores)
 
 */
 
+  int ComportamientoTecnico::CalculoEnergia(Action accion, unsigned char terreno){
+    
+  }
+
+
+list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura){
+  NodoT nodo_actual;
+   
+    priority_queue<NodoT, vector<NodoT>, std::greater<NodoT>> frontier; //ordenamos de forma ascendente
+    set<NodoT> explored;
+
+    
+    nodo_actual.estado = inicio;
+    nodo_actual.g = 0;      
+    nodo_actual.h = 0; 
+    
+    if (inicio.site.f == final.site.f && inicio.site.c == final.site.c) {
+        return list<Action>(); 
+    }
+
+    if (terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c] == 'D') {
+        nodo_actual.estado.zapatillas = true;
+    }
+
+    frontier.push(nodo_actual);
+    explored.insert(nodo_actual);
+
+    // Aquí irá nuestro bucle while (!frontier.empty()) ...
+
+    return list<Action>();
+}
 
 /**
  * @brief Comportamiento del técnico para el Nivel 2.

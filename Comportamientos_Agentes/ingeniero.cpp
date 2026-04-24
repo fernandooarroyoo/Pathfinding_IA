@@ -269,9 +269,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
 
 // Funciones necesarias para la busqueda en anchura.
 
-EstadoT NextCasillaIngeniero(const EstadoT &st)
+EstadoI NextCasillaIngeniero(const EstadoI &st)
 {
-  EstadoT siguiente = st;
+  EstadoI siguiente = st;
   switch (st.site.brujula)
   {
   case norte:
@@ -305,9 +305,9 @@ EstadoT NextCasillaIngeniero(const EstadoT &st)
   return siguiente;
 }
 
-bool CasillaAccesibleIngeniero(const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
+bool CasillaAccesibleIngeniero(const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
 {
-  EstadoT next = NextCasillaIngeniero(st);
+  EstadoI next = NextCasillaIngeniero(st);
 
   bool transitable = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M' and
                      terreno[next.site.f][next.site.c] != 'B';
@@ -318,10 +318,10 @@ bool CasillaAccesibleIngeniero(const EstadoT &st, const vector<vector<unsigned c
   return transitable && check_altura;
 }
 
-EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
+EstadoI applyT(Action accion, const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
 {
- EstadoT next = st;
-  EstadoT intermedia; //para comprobar si el salto es válido
+ EstadoI next = st;
+  EstadoI intermedia; //para comprobar si el salto es válido
   int dif_altura;
   
   switch (accion)
@@ -343,7 +343,7 @@ EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned ch
         terreno[intermedia.site.f][intermedia.site.c] != 'B') 
     {
        
-        EstadoT destino = NextCasillaIngeniero(intermedia);
+        EstadoI destino = NextCasillaIngeniero(intermedia);
         
         bool transitable_destino = terreno[destino.site.f][destino.site.c] != 'P' && 
                                    terreno[destino.site.f][destino.site.c] != 'M' && 
@@ -371,7 +371,7 @@ EstadoT applyT(Action accion, const EstadoT &st, const vector<vector<unsigned ch
   return next;
 }
 
-bool Find(const NodoT &st, const list<NodoT> &lista)
+bool Find(const NodoI &st, const list<NodoI> &lista)
 {
   auto it = lista.begin();
   while (it != lista.end() and !((*it) == st))
@@ -381,11 +381,11 @@ bool Find(const NodoT &st, const list<NodoT> &lista)
   return (it != lista.end());
 }
 
-list<Action> ComportamientoIngeniero::B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
+list<Action> ComportamientoIngeniero::B_Anchura(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
 {
-  NodoT current_node;
-  queue<NodoT> frontier;
-  set<NodoT> explored;
+  NodoI current_node;
+  queue<NodoI> frontier;
+  set<NodoI> explored;
 
   current_node.estado = inicio;
 
@@ -413,7 +413,7 @@ list<Action> ComportamientoIngeniero::B_Anchura(const EstadoT &inicio, const Est
 
     for (Action accion : posibles_acciones)
     {
-      NodoT child = current_node;
+      NodoI child = current_node;
 
       child.estado = applyT(accion, current_node.estado, terreno, altura);
 
@@ -464,7 +464,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
   Action accion = IDLE;
   if (!hayPlan)
   {
-    EstadoT inicio, fin;
+    EstadoI inicio, fin;
     inicio.site.f = sensores.posF;
     inicio.site.c = sensores.posC;
     inicio.site.brujula = sensores.rumbo;

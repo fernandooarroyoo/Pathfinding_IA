@@ -19,7 +19,7 @@
  * Esta clase implementa el comportamiento del agente Técnico en el mundo Belkan.
  * El técnico colabora con el ingeniero para resolver el problema de instalación de tuberías
  */
-/*
+
 struct EstadoT
 {
   ubicacion site;
@@ -35,6 +35,12 @@ struct NodoT
 {
   EstadoT estado;
   list<Action> secuencia;
+
+  int g,h;
+
+  int f() const{
+    return g+h;
+  }
 
   bool operator==(const NodoT &node) const
   {
@@ -54,8 +60,12 @@ struct NodoT
     else
       return false;
   }
+
+  bool operator>(const NodoT &nodo) const{
+    return f() > nodo.f();
+  }
 };
-*/
+
 
 
 class ComportamientoTecnico : public Comportamiento
@@ -245,7 +255,12 @@ protected:
   //list<Action> B_Anchura(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
   //list<Action> B_Anchura_V2(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> & terreno, vector<vector<unsigned char>> &altura);
-private:
+
+  list<Action>BusquedaEstrella(const EstadoT &inicio, const EstadoT &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
+
+  int CalculoEnergia(Action accion, unsigned char terreno);
+
+  private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
