@@ -46,6 +46,38 @@ struct NodoI
   }
 };
 
+struct NodoTub
+{
+  int f,c;
+  int altura;
+  int g;
+  int h;
+  list<Paso> secuencia;
+
+  int fh() const{
+    return g+h;
+  }
+
+  int energia_acumulada;
+  int impacto_acumulado;
+
+  bool operator>(const NodoTub &nodo) const{
+    if(h != nodo.h){
+      return fh() > nodo.fh();
+    }
+
+    return impacto_acumulado > nodo.impacto_acumulado; //en caso de empate de heurística cogemo el que menos energía lleve gastada
+  }
+
+  bool operator<(const NodoTub &nodo) const{
+    return fh() < nodo.fh();
+  }
+
+  bool operator=(const NodoTub &nodo) const{
+    return f==nodo.f and c == nodo.c and altura == nodo.altura;
+  }
+
+};
 
 class ComportamientoIngeniero : public Comportamiento {
 public:
@@ -223,7 +255,15 @@ protected:
 
   list<Action> B_Anchura(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
+  list<Paso>Estrella_tuberias(const NodoTub &inicio, const NodoTub &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura,int maximo_impacto);
 
+  int calcularEnergia(unsigned char terreno, int operacion);
+
+  int calcularImpacto(unsigned char terreno, int operacion);
+
+  int energiaInstall(unsigned char terr);
+
+  int impactoInstall(unsigned char terr);
 private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)

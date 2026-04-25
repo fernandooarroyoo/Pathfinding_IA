@@ -547,7 +547,7 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 {
   NodoT nodo_actual;
 
-  priority_queue<NodoT, vector<NodoT>, std::greater<NodoT>> frontier; // ordenamos de forma ascendente
+  priority_queue<NodoT, vector<NodoT>,greater<NodoT>> frontier; // ordenamos de forma ascendente
   set<NodoT> explored;
 
   nodo_actual.estado = inicio;
@@ -639,13 +639,13 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
     return accion;
   }
   if (sensores.agentes[2] == 'i')
-  { // si se encuentra a un ingeniero de cara lo fuerzo a girar para ir por otro sitio
-    /*giros_forzados = 2;
+  { 
+    giros_forzados = 2;
     accion = TURN_SL;
     last_action = accion;
     return accion;
-    */
-    accion = WALK;
+    
+    
   }
 
   return accion;
