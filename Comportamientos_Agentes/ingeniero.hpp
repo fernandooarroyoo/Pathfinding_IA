@@ -62,22 +62,26 @@ struct NodoTub
   int impacto_acumulado;
 
   bool operator>(const NodoTub &nodo) const{
-    if(h != nodo.h){
+    if(fh() != nodo.fh()){
       return fh() > nodo.fh();
     }
 
     return impacto_acumulado > nodo.impacto_acumulado; //en caso de empate de heurística cogemo el que menos energía lleve gastada
   }
 
-  bool operator<(const NodoTub &nodo) const{
-    return fh() < nodo.fh();
+  bool operator<(const NodoTub &nodo) const {
+    if (f != nodo.f) return f < nodo.f;
+    if (c != nodo.c) return c < nodo.c;
+    return altura < nodo.altura;
   }
 
-  bool operator=(const NodoTub &nodo) const{
+  bool operator==(const NodoTub &nodo) const{
     return f==nodo.f and c == nodo.c and altura == nodo.altura;
   }
 
 };
+
+
 
 class ComportamientoIngeniero : public Comportamiento {
 public:
@@ -255,7 +259,7 @@ protected:
 
   list<Action> B_Anchura(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
-  list<Paso>Estrella_tuberias(const NodoTub &inicio, const NodoTub &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura,int maximo_impacto);
+  list<Paso>Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura,int maximo_impacto);
 
   int calcularEnergia(unsigned char terreno, int operacion);
 
@@ -278,6 +282,8 @@ private:
 
   bool hayPlan;
   list<Action> plan;
+  list<Paso> plan_tuberias;
+  list<NodoTub> plantas_residuos;
 };
 
 #endif

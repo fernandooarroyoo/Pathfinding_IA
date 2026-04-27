@@ -320,10 +320,10 @@ bool CasillaAccesibleIngeniero(const EstadoI &st, const vector<vector<unsigned c
 
 EstadoI applyT(Action accion, const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura)
 {
- EstadoI next = st;
-  EstadoI intermedia; //para comprobar si el salto es válido
+  EstadoI next = st;
+  EstadoI intermedia; // para comprobar si el salto es válido
   int dif_altura;
-  
+
   switch (accion)
   {
   case WALK:
@@ -334,40 +334,40 @@ EstadoI applyT(Action accion, const EstadoI &st, const vector<vector<unsigned ch
     break;
 
   case JUMP:
-    //casilla intermedia
+    // casilla intermedia
     intermedia = NextCasillaIngeniero(st);
-    
-    //no podemos saltar en medio de un precipicio, por ejemplo
-    if (terreno[intermedia.site.f][intermedia.site.c] != 'P' && 
-        terreno[intermedia.site.f][intermedia.site.c] != 'M' && 
-        terreno[intermedia.site.f][intermedia.site.c] != 'B') 
+
+    // no podemos saltar en medio de un precipicio, por ejemplo
+    if (terreno[intermedia.site.f][intermedia.site.c] != 'P' &&
+        terreno[intermedia.site.f][intermedia.site.c] != 'M' &&
+        terreno[intermedia.site.f][intermedia.site.c] != 'B')
     {
-       
-        EstadoI destino = NextCasillaIngeniero(intermedia);
-        
-        bool transitable_destino = terreno[destino.site.f][destino.site.c] != 'P' && 
-                                   terreno[destino.site.f][destino.site.c] != 'M' && 
-                                   terreno[destino.site.f][destino.site.c] != 'B';
-                                   
-       
-        dif_altura = abs(altura[destino.site.f][destino.site.c] - altura[st.site.f][st.site.c]);
-        bool check_altura_destino = st.zapatillas ? (dif_altura <= 2) : (dif_altura <= 1);
-        
-        if (transitable_destino && check_altura_destino) {
-            next = destino; 
-        }
+
+      EstadoI destino = NextCasillaIngeniero(intermedia);
+
+      bool transitable_destino = terreno[destino.site.f][destino.site.c] != 'P' &&
+                                 terreno[destino.site.f][destino.site.c] != 'M' &&
+                                 terreno[destino.site.f][destino.site.c] != 'B';
+
+      dif_altura = abs(altura[destino.site.f][destino.site.c] - altura[st.site.f][st.site.c]);
+      bool check_altura_destino = st.zapatillas ? (dif_altura <= 2) : (dif_altura <= 1);
+
+      if (transitable_destino && check_altura_destino)
+      {
+        next = destino;
+      }
     }
     break;
 
   case TURN_SR:
     next.site.brujula = (Orientacion)((next.site.brujula + 1) % 8);
     break;
-    
+
   case TURN_SL:
     next.site.brujula = (Orientacion)((next.site.brujula + 7) % 8);
     break;
   }
-  
+
   return next;
 }
 
@@ -495,8 +495,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores)
 {
-    Action accion = IDLE;
-  
+  Action accion = IDLE;
 
   if (giros_forzados > 0)
   {
@@ -506,12 +505,11 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores
     return accion;
   }
   if (sensores.agentes[2] == 't')
-  { 
+  {
     giros_forzados = 2;
     accion = TURN_SL;
     last_action = accion;
     return accion;
-    
   }
 
   return accion;
@@ -519,57 +517,36 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores
 
 int ComportamientoIngeniero::calcularEnergia(unsigned char terr, int operacion)
 {
-  if(operacion == 1)
+  if (operacion == 1)
   {
-    switch(terr)
+    switch (terr)
     {
-      case 'H' : return 55;
-      case 'S' : return 30;
-      case 'C' : return 10;
-      case 'U' : return 10;
-      default : return 40; 
+    case 'H':
+      return 55;
+    case 'S':
+      return 30;
+    case 'C':
+      return 10;
+    case 'U':
+      return 10;
+    default:
+      return 40;
     }
   }
-  else if(operacion == -1)
+  else if (operacion == -1)
   {
-    switch(terr)
+    switch (terr)
     {
-      case 'H' : return 65;
-      case 'S' : return 40;
-      case 'C' : return 25;
-      case 'U' : return 25;
-      default : return 50; 
-    }
-  }
-  else
-  {
-   return 0;
-  }
-}
-
-
-int ComportamientoIngeniero::calcularImpacto(unsigned char terr, int operacion)
-{
-  if(operacion == 1)
-  {
-    switch(terr)
-    {
-      case 'H' : return 55;
-      case 'S' : return 30;
-      case 'C' : return 10;
-      case 'U' : return 10;
-      default : return 40; 
-    }
-  }
-  else if(operacion == -1)
-  {
-    switch(terr)
-    {
-      case 'H' : return 65;
-      case 'S' : return 40;
-      case 'C' : return 25;
-      case 'U' : return 25;
-      default : return 50; 
+    case 'H':
+      return 65;
+    case 'S':
+      return 40;
+    case 'C':
+      return 25;
+    case 'U':
+      return 25;
+    default:
+      return 50;
     }
   }
   else
@@ -578,117 +555,188 @@ int ComportamientoIngeniero::calcularImpacto(unsigned char terr, int operacion)
   }
 }
 
-
-
-int ComportamientoIngeniero::energiaInstall(unsigned char terr){
-  switch(terr)
-  {
-    case 'A' : return 60;
-    case 'H' : return 45;
-    case 'S' : return 25;
-    case 'C' : return 15;
-    case 'U' : return 15;
-    default : return 30;
-  }
-}
-
-int ComportamientoIngeniero::impactoInstall(unsigned char terr){
-  switch(terr)
-  {
-    case 'A' : return 50;
-    case 'H' : return 45;
-    case 'S' : return 25;
-    case 'C' : return 15;
-    case 'U' : return 15;
-    default : return 30;
-  }
-}
-
-list<Paso>ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const NodoTub &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
+int ComportamientoIngeniero::calcularImpacto(unsigned char terr, int operacion)
 {
+  if (operacion == 1)
+  {
+    switch (terr)
+    {
+    case 'H':
+      return 55;
+    case 'S':
+      return 30;
+    case 'C':
+      return 10;
+    case 'U':
+      return 10;
+    default:
+      return 40;
+    }
+  }
+  else if (operacion == -1)
+  {
+    switch (terr)
+    {
+    case 'H':
+      return 65;
+    case 'S':
+      return 40;
+    case 'C':
+      return 25;
+    case 'U':
+      return 25;
+    default:
+      return 50;
+    }
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+int ComportamientoIngeniero::energiaInstall(unsigned char terr)
+{
+  switch (terr)
+  {
+  case 'A':
+    return 60;
+  case 'H':
+    return 45;
+  case 'S':
+    return 25;
+  case 'C':
+    return 15;
+  case 'U':
+    return 15;
+  default:
+    return 30;
+  }
+}
+
+int ComportamientoIngeniero::impactoInstall(unsigned char terr)
+{
+  switch (terr)
+  {
+  case 'A':
+    return 50;
+  case 'H':
+    return 45;
+  case 'S':
+    return 25;
+  case 'C':
+    return 15;
+  case 'U':
+    return 15;
+  default:
+    return 30;
+  }
+}
+
+list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
+{
+
   NodoTub nodo_actual = inicio;
   nodo_actual.g = 0;
   nodo_actual.h = 0;
-  priority_queue<NodoTub,vector<NodoTub>,greater<NodoTub>> frontier;
+  priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
   set<NodoTub> explored;
 
-  Paso inicial = {inicio.f,inicio.c,0};
+  Paso inicial = {inicio.f, inicio.c, 0};
   nodo_actual.secuencia.push_back(inicial);
   frontier.push(nodo_actual);
-  explored.insert(nodo_actual);
+  //explored.insert(nodo_actual);
 
-  while(!frontier.empty())
+  while (!frontier.empty())
   {
     nodo_actual = frontier.top();
     frontier.pop();
 
-    if(nodo_actual.f == final.f and nodo_actual.c == final.c)
-    {
+    
+   //condicion de parada
+   for(const auto &p : final){
+    if(nodo_actual.f == p.f and nodo_actual.c == p.c ){
       return nodo_actual.secuencia;
     }
-
-
-
-
-    int df[] = {-1,1,0,0};
-    int dc[] = {0,0,1,-1};
+   }
     
-    for(int i = 0; i<4 ; i++){
+    explored.insert(nodo_actual);
+    
+    int df[] = {-1, 1, 0, 0};
+    int dc[] = {0, 0, 1, -1};
+
+    for (int i = 0; i < 4; i++)
+    {
       int vf = nodo_actual.f + df[i];
       int vc = nodo_actual.c + dc[i];
-      
-      if(vf < 0 || vf >= terreno.size() || vc < 0 || vc >= terreno[0].size()) {
-          continue; //comprobamos si se sale del mapa
+
+      if (vf < 0 || vf >= terreno.size() || vc < 0 || vc >= terreno[0].size())
+      {
+        continue; // comprobamos si se sale del mapa
       }
 
       unsigned char terr = terreno[vf][vc];
-      if(terr == 'M' || terr == 'P' ) continue; //miramos si la casilla es accesible
+      if (terr == 'M' || terr == 'P')
+        continue; // miramos si la casilla es accesible
 
       int altura_origen = altura[vf][vc];
-      for(int op = -1 ; op <= 1; op++){
-        if(op == -1 && (altura_origen <= 1 || terr == 'A')) continue;
-        if(op == 1 && (altura_origen >= 9 || terr == 'A')) continue;
-        //para que dig y raise tengan éxito tienen que cumplir ciertas condiciones
+      for (int op = -1; op <= 1; op++)
+      {
+        if (op == -1 && (altura_origen <= 1 || terr == 'A'))
+          continue;
+        if (op == 1 && (altura_origen >= 9 || terr == 'A'))
+          continue;
+        // para que dig y raise tengan éxito tienen que cumplir ciertas condiciones
 
         int altura_vecino = altura_origen + op;
 
-        if(!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino +1)) continue; //regla de la gravedad
+        if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1))
+          continue; // regla de la gravedad
 
-        //la energia de install es comun a todos, lo que hay que sumar es si se hace raise o dig
+
+        // la energia de install es comun a todos, lo que hay que sumar es si se hace raise o dig
         int energia_paso = energiaInstall(terr);
-        int impacto_paso = impactoInstall(terr); //METER EN CLASE COMPORTAMIENTOINGENIERO
+        int impacto_paso = impactoInstall(terr);
 
-        energia_paso += calcularEnergia(terr,op);
-        impacto_paso += calcularImpacto(terr,op);
+        energia_paso += calcularEnergia(terr, op);
+        impacto_paso += calcularImpacto(terr, op);
 
         int energia_restante = nodo_actual.energia_acumulada - energia_paso;
         int impacto_total = nodo_actual.impacto_acumulado + impacto_paso;
 
-        if(impacto_total > maximo_impacto || energia_restante < 0) continue; // si superan el umbral no las queremos
-        
+        if (impacto_total > maximo_impacto || energia_restante < 0)
+          continue; // si superan el umbral no las queremos
 
-        //Si se llega hasta aquí, todo está correcto -> podemos crear el hijo
+        // Si se llega hasta aquí, todo está correcto -> podemos crear el hijo
         NodoTub hijo;
         hijo.f = vf;
-        hijo.c  = vc;
+        hijo.c = vc;
         hijo.altura = altura_vecino;
 
         hijo.energia_acumulada = energia_restante;
         hijo.impacto_acumulado = impacto_total;
 
         hijo.g = nodo_actual.g + 1;
-        hijo.h = abs(final.f - vf) + abs(final.c - vc); //distancia manhattan, nos asegura en este caso la solucion más óptima
-        
-        Paso nuevo_paso = {vf,vc,op};
+
+        int distancia_minima = 2000000;
+        //distancia manhattan
+        for(const auto &p : final){
+          int dist = abs(p.f - vf) + abs(p.c - vc); // distancia manhattan, nos asegura en este caso la solucion más óptima
+          if (dist <= distancia_minima) distancia_minima = dist;
+        }
+        hijo.h = distancia_minima;
+
+        Paso nuevo_paso = {vf, vc, op};
         hijo.secuencia = nodo_actual.secuencia;
         hijo.secuencia.push_back(nuevo_paso);
 
+
         if(explored.find(hijo) == explored.end()){
+
           frontier.push(hijo);
         }
         
       }
-
     }
   }
 
@@ -702,43 +750,32 @@ list<Paso>ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, cons
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores)
 {
-  list<Paso> pipeline;
-  NodoTub inicio, final;
-  
-  int meta_f = -1,meta_c = -1;
-  for(int i = 0; i< mapaResultado.size(); i++){
-    for(int j = 0; j< mapaResultado[i].size(); j++){
-      if(mapaResultado[i][j] == 'U')
-      {
-        meta_f = i;
-        meta_c = j;
-        break;
+  if(!hayPlan){
+    NodoTub inicio;
+    inicio.f = sensores.BelPosF;
+    inicio.c = sensores.BelPosC;
+    inicio.altura = mapaCotas[inicio.f][inicio.c];
+    inicio.energia_acumulada = sensores.energia;
+    inicio.impacto_acumulado = 0;
+    inicio.g = 0;
+
+    plantas_residuos.clear();
+    for(int i = 0; i<mapaResultado.size() ; i++){
+      for(int j = 0; j<mapaResultado[i].size(); j++){
+        if(mapaResultado[i][j] == 'U'){
+          NodoTub planta;
+          planta.f = i;
+          planta.c = j;
+          plantas_residuos.push_back(planta);
+        }
       }
     }
-    if(meta_f != -1 ) break;
+
+    plan_tuberias = Estrella_tuberias(inicio,plantas_residuos,mapaResultado,mapaCotas,sensores.max_ecologico);
+    hayPlan=true;
   }
-
-  inicio.f = sensores.BelPosF;
-  inicio.c = sensores.BelPosC;
-  inicio.altura = mapaCotas[inicio.f][inicio.c];
-  inicio.energia_acumulada = sensores.energia;
-  
-  int impacto_maximo = sensores.max_ecologico;
-
-  final.f = meta_f;
-  final.c = meta_c;
-
-  list<Paso> plan_tuberias = Estrella_tuberias(inicio,final,mapaResultado,mapaCotas,impacto_maximo);
-
-  if(!plan_tuberias.empty())
-  {
-    VisualizaRedTuberias(plan_tuberias);
-  }
-
+  VisualizaRedTuberias(plan_tuberias);
   return IDLE;
-
-  
-
 }
 
 /**
