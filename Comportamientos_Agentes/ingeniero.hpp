@@ -99,6 +99,7 @@ public:
     tiene_zapatillas = false;
     giro45Izq = 0;
     giros_forzados = 0;
+    llegaBelk=false;
   }
 
   /**
@@ -268,6 +269,8 @@ protected:
   int energiaInstall(unsigned char terr);
 
   int impactoInstall(unsigned char terr);
+
+  Action Desplazarse(Sensores sensores);
 private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
@@ -284,6 +287,11 @@ private:
   list<Action> plan;
   list<Paso> plan_tuberias;
   list<NodoTub> plantas_residuos;
+
+  bool llegaBelk;
+  NodoTub planta_objetivo;
+  bool terreno_preparado;
+  bool construyendo;
 };
 
 #endif

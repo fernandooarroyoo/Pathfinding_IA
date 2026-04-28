@@ -645,23 +645,26 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
   Paso inicial = {inicio.f, inicio.c, 0};
   nodo_actual.secuencia.push_back(inicial);
   frontier.push(nodo_actual);
-  //explored.insert(nodo_actual);
+  // explored.insert(nodo_actual);
 
   while (!frontier.empty())
   {
     nodo_actual = frontier.top();
     frontier.pop();
 
-    
-   //condicion de parada
-   for(const auto &p : final){
-    if(nodo_actual.f == p.f and nodo_actual.c == p.c ){
-      return nodo_actual.secuencia;
+    // condicion de parada
+    for (const auto &p : final)
+    {
+      if (nodo_actual.f == p.f and nodo_actual.c == p.c)
+      {
+        planta_objetivo.f = p.f;
+        planta_objetivo.c = p.c;
+        return nodo_actual.secuencia;
+      }
     }
-   }
-    
+
     explored.insert(nodo_actual);
-    
+
     int df[] = {-1, 1, 0, 0};
     int dc[] = {0, 0, 1, -1};
 
@@ -693,7 +696,6 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1))
           continue; // regla de la gravedad
 
-
         // la energia de install es comun a todos, lo que hay que sumar es si se hace raise o dig
         int energia_paso = energiaInstall(terr);
         int impacto_paso = impactoInstall(terr);
@@ -719,10 +721,12 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         hijo.g = nodo_actual.g + 1;
 
         int distancia_minima = 2000000;
-        //distancia manhattan
-        for(const auto &p : final){
+        // distancia manhattan
+        for (const auto &p : final)
+        {
           int dist = abs(p.f - vf) + abs(p.c - vc); // distancia manhattan, nos asegura en este caso la solucion más óptima
-          if (dist <= distancia_minima) distancia_minima = dist;
+          if (dist <= distancia_minima)
+            distancia_minima = dist;
         }
         hijo.h = distancia_minima;
 
@@ -730,12 +734,11 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         hijo.secuencia = nodo_actual.secuencia;
         hijo.secuencia.push_back(nuevo_paso);
 
-
-        if(explored.find(hijo) == explored.end()){
+        if (explored.find(hijo) == explored.end())
+        {
 
           frontier.push(hijo);
         }
-        
       }
     }
   }
@@ -750,7 +753,8 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores)
 {
-  if(!hayPlan){
+  if (!hayPlan)
+  {
     NodoTub inicio;
     inicio.f = sensores.BelPosF;
     inicio.c = sensores.BelPosC;
@@ -760,9 +764,12 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
     inicio.g = 0;
 
     plantas_residuos.clear();
-    for(int i = 0; i<mapaResultado.size() ; i++){
-      for(int j = 0; j<mapaResultado[i].size(); j++){
-        if(mapaResultado[i][j] == 'U'){
+    for (int i = 0; i < mapaResultado.size(); i++)
+    {
+      for (int j = 0; j < mapaResultado[i].size(); j++)
+      {
+        if (mapaResultado[i][j] == 'U')
+        {
           NodoTub planta;
           planta.f = i;
           planta.c = j;
@@ -771,8 +778,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
       }
     }
 
-    plan_tuberias = Estrella_tuberias(inicio,plantas_residuos,mapaResultado,mapaCotas,sensores.max_ecologico);
-    hayPlan=true;
+    plan_tuberias = Estrella_tuberias(inicio, plantas_residuos, mapaResultado, mapaCotas, sensores.max_ecologico);
+    hayPlan = true;
   }
   VisualizaRedTuberias(plan_tuberias);
   return IDLE;
@@ -785,7 +792,116 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+  if (!hayPlan and !llegaBelk)
+  {
+    EstadoI inicio, fin;
+    inicio.site.f = sensores.posF;
+    inicio.site.c = sensores.posC;
+    inicio.site.brujula = sensores.rumbo;
+    inicio.zapatillas = tiene_zapatillas;
+    fin.site.f = sensores.BelPosF;
+    fin.site.c = sensores.BelPosC;
+    plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+    VisualizaPlan(inicio.site, plan);
+    hayPlan = plan.size() != 0;
+  }
+  if (hayPlan and !llegaBelk)
+  {
+    accion = plan.front();
+    plan.pop_front();
+
+    if (plan.size() == 0)
+    {
+      llegaBelk = true;
+      hayPlan = false;
+      ComportamientoIngenieroNivel_4(sensores);
+      hayPlan = false;
+    }
+  }
+
+  // Construcción tramo a tramo
+
+  if (llegaBelk and !plan_tuberias.empty())
+  {
+    Paso tramo_actual = plan_tuberias.front();
+
+    if (sensores.posF != tramo_actual.fil || sensores.posC != tramo_actual.col)
+    {
+      if (!hayPlan)
+      {
+        EstadoI p_inicio = {sensores.posF, sensores.posC, sensores.rumbo};
+        EstadoI p_fin = {tramo_actual.fil, tramo_actual.col, sensores.rumbo};
+        plan = B_Anchura(p_inicio, p_fin, mapaResultado, mapaCotas);
+        hayPlan = true;
+      }
+      accion = plan.front();
+      plan.pop_front();
+      if (plan.size() == 0)
+        hayPlan = false;
+      return accion;
+    }
+
+    //miramos hacia la siguiente casilla, nos orientamos bien
+
+    int rumboDeseado = -1;
+    if (plan_tuberias.size() > 1)
+    {
+      auto it = plan_tuberias.begin();
+      ++it; // Miramos el siguiente en la lista
+      if (it->fil < sensores.posF)
+        rumboDeseado = 0;
+      else if (it->fil > sensores.posF)
+        rumboDeseado = 4;
+      else if (it->col > sensores.posC)
+        rumboDeseado = 2;
+      else if (it->col < sensores.posC)
+        rumboDeseado = 6;
+    }
+
+    // Si no estoy mirando a donde debo, giro antes de hacer nada más
+    if (rumboDeseado != -1 && sensores.rumbo != rumboDeseado)
+    {
+      int diff = (rumboDeseado - sensores.rumbo + 8) % 8;
+      if (diff <= 4)
+        return TURN_SR;
+      else
+        return TURN_SL;
+    }
+
+    // operaciones DIG o RAISE
+    if (!terreno_preparado)
+    {
+      if (tramo_actual.op == -1)
+      {
+        terreno_preparado = true;
+        return DIG;
+      }
+      else if (tramo_actual.op == 1)
+      {
+        terreno_preparado = true;
+        return RAISE;
+      }
+      else
+      {
+        terreno_preparado = true;
+      }
+    }
+
+    // si tenemos al técnico frente mi lo instalamos, sino lo llamados
+    if (sensores.enfrente)
+    {
+      plan_tuberias.pop_front();
+      terreno_preparado = false;
+      return INSTALL;
+    }
+    else
+    {
+      return COME;
+    }
+  }
+
+  return accion;
 }
 
 /**
