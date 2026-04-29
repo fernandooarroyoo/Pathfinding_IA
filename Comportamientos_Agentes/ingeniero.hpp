@@ -245,6 +245,8 @@ protected:
 
   bool es_camino(unsigned char c) const;
 
+list<Action> B_Anchura_Mejorada(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
+
   /**
  * @brief Imprime por consola la secuencia de acciones de un plan para un agente.
  * @param plan  Lista de acciones del plan.

@@ -94,7 +94,7 @@ public:
     last_action = IDLE;
     tiene_zapatillas = false;
     giro45Izq = 0;
-    estado_instalacion = ESPERAR_LLAMADA;
+    estado_instalacion = IR_A_BELKANITA;
     llegaBelk = false;
   }
 
@@ -111,6 +111,7 @@ public:
     last_action = IDLE;
     giro45Izq = 0;
     tiene_zapatillas = false;
+    estado_instalacion = IR_A_BELKANITA;
   }
 
   ComportamientoTecnico(const ComportamientoTecnico &comport) : Comportamiento(comport) {}

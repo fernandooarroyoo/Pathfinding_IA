@@ -784,6 +784,79 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
   return IDLE;
 }
 
+list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
+{
+  NodoI current_node;
+  queue<NodoI> frontier;
+  set<NodoI> explored;
+
+  current_node.estado = inicio;
+
+  // comprobacion inicial
+  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
+  {
+    return list<Action>();
+  }
+  // comprobamos si nacemos en unas zapatillas
+  if (terreno[current_node.estado.site.f][current_node.estado.site.c] == 'D')
+  {
+    current_node.estado.zapatillas = true;
+  }
+
+  frontier.push(current_node);
+  explored.insert(current_node);
+
+  // Las 4 acciones permitidas en el lv2
+  Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL,DIG,RAISE};
+
+  while (!frontier.empty())
+  {
+    current_node = frontier.front();
+    frontier.pop();
+
+    for (Action accion : posibles_acciones)
+    {
+      NodoI child = current_node;
+
+      child.estado = applyT(accion, current_node.estado, terreno, altura);
+
+      // si el hijo no ha hecho nada, lo ignoro
+      if (child.estado.site.f == current_node.estado.site.f and
+          child.estado.site.c == current_node.estado.site.c and
+          child.estado.site.brujula == current_node.estado.site.brujula)
+      {
+        continue;
+      }
+
+      // compruebo si estoy en un sitio de zapatillas
+      if (terreno[child.estado.site.f][child.estado.site.c] == 'D')
+      {
+        child.estado.zapatillas = true;
+      }
+
+      // registramos en la secuencia
+      child.secuencia.push_back(accion);
+
+      // compruebo si he llegado a la meta
+      if (child.estado.site.f == final.site.f && child.estado.site.c == final.site.c)
+      {
+        return child.secuencia; // ¡Encontrado el camino más corto en instantes!
+      }
+
+      // miro si esta explorado, y lo meto en la cola frontier
+      if (explored.find(child) == explored.end())
+      {
+        explored.insert(child);
+        frontier.push(child);
+      }
+    }
+  }
+
+  // si no hemos encontrado nada, devolvemos una lista vacia
+  return list<Action>();
+}
+
+
 Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
 {
   int dif_f = hacia.site.f - desde.site.f;
@@ -820,7 +893,7 @@ Action girarHacia(Orientacion actual, Orientacion objetivo)
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
   Action accion = IDLE;
-
+/*
   if (!llegaBelk)
   {
     if (!hayPlan)
@@ -832,7 +905,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       inicio.zapatillas = tiene_zapatillas;
       fin.site.f = sensores.BelPosF;
       fin.site.c = sensores.BelPosC;
-      plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+      plan = B_Anchura_Mejorada(inicio, fin, mapaResultado, mapaCotas);
       hayPlan = !plan.empty();
     }
     
@@ -853,6 +926,15 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       }
     }
     return accion;
+  }
+*/
+  //cuando empecemos
+  if(!llegaBelk){
+    ComportamientoIngenieroNivel_4(sensores);
+    llegaBelk = true;
+    indice_tuberia = 1;
+    estado_instalacion = MOVER_A_POSICION;
+    terreno_preparado = false;
   }
 
  //llegamos a belkanita, toca construir

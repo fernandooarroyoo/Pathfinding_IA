@@ -724,14 +724,25 @@ Action ComportamientoTecnico::girarHacia(Orientacion actual, Orientacion objetiv
 
 Orientacion calcularCasillaObjetivo(int ft, int ct, int fi, int ci, Orientacion rumbo)
 {
-  if ((fi < ft and ci > ct and rumbo == norte) || (fi > ft and ci > ct and rumbo == sur))
-    return oeste;
-  if ((fi > ft and ci < ct and rumbo == oeste) || (fi > ft and ci > ct and rumbo == este))
-    return norte;
-  if ((fi < ft and ci < ct and rumbo == oeste) || (fi < ft and ci > ct and rumbo == este))
-    return sur;
-  if ((fi < ft and ci < ct and rumbo == norte) || (fi > ft and ci < ct and rumbo == sur))
-    return este;
+  if(fi!=ft and ci != ct){ //caso casilla diagonal
+    if ((fi < ft and ci > ct and rumbo == norte) || (fi > ft and ci > ct and rumbo == sur))
+      return oeste;
+    if ((fi > ft and ci < ct and rumbo == oeste) || (fi > ft and ci > ct and rumbo == este))
+      return norte;
+    if ((fi < ft and ci < ct and rumbo == oeste) || (fi < ft and ci > ct and rumbo == este))
+      return sur;
+    if ((fi < ft and ci < ct and rumbo == norte) || (fi > ft and ci < ct and rumbo == sur))
+      return este;
+  }
+  else //caso casilla recta (no diagonal)
+  {
+    if(fi==ft and ci>ct and rumbo == este) return oeste;
+    if(fi==ft and ci<ct and rumbo == oeste) return este;
+    if(fi<ft and ci==ct and rumbo == norte) return sur;
+    if(fi>ft and ci==ct and rumbo == sur) return norte;
+  }
+
+
 
     return norte;
 }
@@ -756,6 +767,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
     }
     if (!hayPlan)
     {
+      cout << "Buscando el plan a la belkanita..."<<endl;
       EstadoT inicio, fin;
       inicio.site.f = sensores.posF;
       inicio.site.c = sensores.posC;
@@ -769,6 +781,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
     }
     else
     {
+      cout << "plan encontrado!" << endl;
       accion = plan.front();
       plan.pop_front();
       if (plan.size() < 1)
@@ -862,7 +875,9 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
       {
         estado_instalacion = IR_A_BELKANITA;
       }
-      estado_instalacion = ACERCARSE;
+      else{
+        estado_instalacion = ACERCARSE;
+      }
     }
     break;
   }
@@ -894,6 +909,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
   }
   }
 
+  cout << "ESTADO_T: " <<estado_instalacion<<endl;
   return accion;
 }
 
