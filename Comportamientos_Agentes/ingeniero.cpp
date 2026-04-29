@@ -821,7 +821,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
 {
   Action accion = IDLE;
 
-  // --- FASE 1: LLEGADA A LA BELKANITA ---
   if (!llegaBelk)
   {
     if (!hayPlan)
@@ -847,8 +846,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
         llegaBelk = true;
         hayPlan = false;
         ComportamientoIngenieroNivel_4(sensores);
-        // Empezamos la construcción. El Ingeniero lidera, así que va al nodo 1.
-        // El Técnico se pondrá en el nodo 0 (la Belkanita).
+      
         indice_tuberia = 1; 
         estado_instalacion = MOVER_A_POSICION;
         terreno_preparado = false;
@@ -857,15 +855,14 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
     return accion;
   }
 
-  // ya hemos llegado a la belkanita, construimos
+ //llegamos a belkanita, toca construir
   if (!plan_tuberias.empty() && indice_tuberia < plan_tuberias.size())
   {
-    // Obtener nodo actual (donde se pone el Ingeniero)
+
     auto it_actual = plan_tuberias.begin();
     advance(it_actual, indice_tuberia);
     EstadoI pos_objetivo = {it_actual->fil, it_actual->col, norte};
 
-    // Obtener nodo anterior (donde se pondrá el Técnico)
     auto it_anterior = plan_tuberias.begin();
     advance(it_anterior, indice_tuberia - 1);
     EstadoI pos_anterior = {it_anterior->fil, it_anterior->col, norte};
@@ -902,15 +899,13 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
         if (!terreno_preparado)
         {
           int oper = it_actual->op;
-          terreno_preparado = true; // Lo marcamos como hecho, haga o no haga nada
+          terreno_preparado = true;
           
           if (oper == 1) { accion = RAISE; break; }
           else if (oper == -1) { accion = DIG; break; }
-          // Si op == 0, pasa directamente al estado ORIENTARSE en este mismo tick
         }
         
         estado_instalacion = ORIENTARSE_Y_LLAMAR;
-        // No hay break intencional aquí si no hay acción física, fluye al siguiente case.
       }
 
       case ORIENTARSE_Y_LLAMAR:
@@ -934,8 +929,9 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       {
         if (sensores.enfrente)
         {
-          estado_instalacion = INSTALAR;
-          accion = IDLE;
+          accion=INSTALL;
+          indice_tuberia++;
+          estado_instalacion = MOVER_A_POSICION;
         }
         else
         {
@@ -949,8 +945,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
         accion = INSTALL;
         indice_tuberia++;
         estado_instalacion = MOVER_A_POSICION;
-        // Al instalar, también vaciamos la lista de pasos para ahorrar memoria (opcional)
-        // Pero controlando por indice_tuberia es suficiente.
         break;
       }
     }

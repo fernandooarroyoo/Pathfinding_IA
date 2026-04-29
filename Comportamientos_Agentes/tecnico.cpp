@@ -724,7 +724,6 @@ Action ComportamientoTecnico::girarHacia(Orientacion actual, Orientacion objetiv
 
 Orientacion calcularCasillaObjetivo(int ft, int ct, int fi, int ci, Orientacion rumbo)
 {
-  cout << "Técnico(" << ft << "," << ct << ") ||| Ingeniero(" << fi << "," << ci<<")"<<endl; 
   if ((fi < ft and ci > ct and rumbo == norte) || (fi > ft and ci > ct and rumbo == sur))
     return oeste;
   if ((fi > ft and ci < ct and rumbo == oeste) || (fi > ft and ci > ct and rumbo == este))
@@ -781,22 +780,25 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
   {
     if (abs(sensores.posF - sensores.GotoF) + abs(sensores.posC - sensores.GotoC) == 1)
     {
-      cout << "Estoy suficientemente cerca" << endl;
       if (!sensores.enfrente)
       {
         estado_instalacion = ORIENTARSE;
       }
       else
-      {
-        estado_instalacion = INSTALAR_T;
+      { 
+        estado_instalacion = ESPERAR_LLAMADA;
+        accion = INSTALL;
       }
       hayPlan = false;
       plan.clear();
+      
     }
     else
     {
       if (!hayPlan)
       {
+        
+        cout << "NO hay plan"<<endl;
         EstadoT inicio = {sensores.posF, sensores.posC, sensores.rumbo};
         EstadoT fin = {sensores.GotoF, sensores.GotoC, norte};
         Orientacion obj = calcularCasillaObjetivo(sensores.posF, sensores.posC, sensores.GotoF, sensores.GotoC, sensores.rumbo);
@@ -827,19 +829,18 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
         if (fin.site.f >= 0 && fin.site.f < mapaResultado.size() &&
             fin.site.c >= 0 && fin.site.c < mapaResultado[0].size())
         {
-
+          cout << fin.site.f << fin.site.c << inicio.site.f << inicio.site.c << endl;
           plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
           hayPlan = !plan.empty();
         }
         else
         {
-          cout << "ERROR: El objetivo calculado está fuera del mapa!" << endl;
           hayPlan = false;
         }
+       
       }
       else if (hayPlan and !plan.empty())
       {
-        cout << "Hay plan y no está vacío" << plan.size() << endl;
         accion = plan.front();
         plan.pop_front();
         if (plan.empty())
@@ -851,6 +852,10 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
 
   case ESPERAR_LLAMADA:
   {
+    if(sensores.enfrente)
+    {
+      accion=INSTALL;
+    }
     if (sensores.venpaca)
     {
       if (!llegaBelk)
@@ -864,19 +869,19 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
 
   case ORIENTARSE:
   {
-
-    cout << "Me voy a orientar" << endl;
     EstadoT pos_actual = {sensores.posF, sensores.posC, norte};
     EstadoT pos_objetivo = {sensores.GotoF, sensores.GotoC, norte};
     Orientacion necesaria = calcularOrientacion(pos_actual, pos_objetivo);
 
     if (sensores.rumbo != necesaria)
     {
-      accion = girarHacia((Orientacion)sensores.rumbo, necesaria);
+      accion = girarHacia(sensores.rumbo, necesaria);
     }
     else
     {
-      estado_instalacion = INSTALAR_T;
+      accion = INSTALL;
+      estado_instalacion = ESPERAR_LLAMADA;
+      //estado_instalacion = INSTALAR_T;
     }
     break;
   }
@@ -889,7 +894,6 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
   }
   }
 
-  cout << estado_instalacion << endl;
   return accion;
 }
 
