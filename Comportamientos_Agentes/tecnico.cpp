@@ -547,7 +547,7 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 {
   NodoT nodo_actual;
 
-  priority_queue<NodoT, vector<NodoT>,greater<NodoT>> frontier; // ordenamos de forma ascendente
+  priority_queue<NodoT, vector<NodoT>, greater<NodoT>> frontier; // ordenamos de forma ascendente
   set<NodoT> explored;
 
   nodo_actual.estado = inicio;
@@ -587,10 +587,11 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 
       hijo.estado = applyT(accion, nodo_actual.estado, terreno, altura);
 
-      //comprobamos que no se choca contra un muro, para evitar un bucle infinito
+      // comprobamos que no se choca contra un muro, para evitar un bucle infinito
 
-      if(accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c){
-        continue; //descartamos al hijo porque el movimiento es ilegal, applyT ha dicho que por ahí no se puede
+      if (accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c)
+      {
+        continue; // descartamos al hijo porque el movimiento es ilegal, applyT ha dicho que por ahí no se puede
       }
 
       unsigned char terreno_origen = terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
@@ -639,13 +640,11 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
     return accion;
   }
   if (sensores.agentes[2] == 'i')
-  { 
+  {
     giros_forzados = 2;
     accion = TURN_SL;
     last_action = accion;
     return accion;
-    
-    
   }
 
   return accion;
@@ -659,27 +658,28 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores)
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_3(Sensores sensores)
 {
   Action accion = IDLE;
-  if(!hayPlan)
+  if (!hayPlan)
   {
-    EstadoT inicio,fin;
+    EstadoT inicio, fin;
     inicio.site.f = sensores.posF;
     inicio.site.c = sensores.posC;
     inicio.site.brujula = sensores.rumbo;
     inicio.zapatillas = tiene_zapatillas;
     fin.site.f = sensores.BelPosF;
     fin.site.c = sensores.BelPosC;
-    plan = BusquedaEstrella(inicio,fin,mapaResultado,mapaCotas);
-    VisualizaPlan(inicio.site,plan);
+    plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
+    VisualizaPlan(inicio.site, plan);
     hayPlan = plan.size() != 0;
   }
 
-  if(hayPlan and plan.size() > 0)
+  if (hayPlan and plan.size() > 0)
   {
     accion = plan.front();
     plan.pop_front();
   }
 
-  if(plan.size() == 0){
+  if (plan.size() == 0)
+  {
     hayPlan = false;
   }
 
@@ -696,6 +696,46 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_4(Sensores sensores)
   return IDLE;
 }
 
+Orientacion ComportamientoTecnico::calcularOrientacion(EstadoT desde, EstadoT hacia)
+{
+  int dif_f = hacia.site.f - desde.site.f;
+  int dif_c = hacia.site.c - desde.site.c;
+
+  if (dif_f == -1)
+    return norte;
+  if (dif_c == 1)
+    return este;
+  if (dif_f == 1)
+    return sur;
+  if (dif_c == -1)
+    return oeste;
+
+  return norte;
+}
+
+Action ComportamientoTecnico::girarHacia(Orientacion actual, Orientacion objetivo)
+{
+  int diferencia = (objetivo - actual + 8) % 8;
+
+  if (diferencia <= 4)
+    return TURN_SR;
+  return TURN_SL;
+}
+
+Orientacion calcularCasillaObjetivo(int ft, int ct, int fi, int ci, Orientacion rumbo)
+{
+  cout << "Técnico(" << ft << "," << ct << ") ||| Ingeniero(" << fi << "," << ci<<")"<<endl; 
+  if ((fi < ft and ci > ct and rumbo == norte) || (fi > ft and ci > ct and rumbo == sur))
+    return oeste;
+  if ((fi > ft and ci < ct and rumbo == oeste) || (fi > ft and ci > ct and rumbo == este))
+    return norte;
+  if ((fi < ft and ci < ct and rumbo == oeste) || (fi < ft and ci > ct and rumbo == este))
+    return sur;
+  if ((fi < ft and ci < ct and rumbo == norte) || (fi > ft and ci < ct and rumbo == sur))
+    return este;
+
+    return norte;
+}
 /**
  * @brief Comportamiento del técnico para el Nivel 5.
  * @param sensores Datos actuales de los sensores.
@@ -703,7 +743,154 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_4(Sensores sensores)
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+
+  switch (estado_instalacion)
+  {
+  case IR_A_BELKANITA:
+  {
+    if (sensores.posF == sensores.BelPosF and sensores.posC == sensores.BelPosC)
+    {
+      llegaBelk = true;
+      estado_instalacion = ESPERAR_LLAMADA;
+      hayPlan = false;
+    }
+    if (!hayPlan)
+    {
+      EstadoT inicio, fin;
+      inicio.site.f = sensores.posF;
+      inicio.site.c = sensores.posC;
+      inicio.site.brujula = sensores.rumbo;
+      inicio.zapatillas = tiene_zapatillas;
+      fin.site.f = sensores.BelPosF;
+      fin.site.c = sensores.BelPosC;
+      plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
+      VisualizaPlan(inicio.site, plan);
+      hayPlan = plan.size() != 0;
+    }
+    else
+    {
+      accion = plan.front();
+      plan.pop_front();
+      if (plan.size() < 1)
+        hayPlan = false;
+    }
+    break;
+
+  case ACERCARSE:
+  {
+    if (abs(sensores.posF - sensores.GotoF) + abs(sensores.posC - sensores.GotoC) == 1)
+    {
+      cout << "Estoy suficientemente cerca" << endl;
+      if (!sensores.enfrente)
+      {
+        estado_instalacion = ORIENTARSE;
+      }
+      else
+      {
+        estado_instalacion = INSTALAR_T;
+      }
+      hayPlan = false;
+      plan.clear();
+    }
+    else
+    {
+      if (!hayPlan)
+      {
+        EstadoT inicio = {sensores.posF, sensores.posC, sensores.rumbo};
+        EstadoT fin = {sensores.GotoF, sensores.GotoC, norte};
+        Orientacion obj = calcularCasillaObjetivo(sensores.posF, sensores.posC, sensores.GotoF, sensores.GotoC, sensores.rumbo);
+
+        switch (obj)
+        {
+        case norte:
+        {
+          fin.site.f--;
+          break;
+        }
+        case sur:
+        {
+          fin.site.f++;
+          break;
+        }
+        case este:
+        {
+          fin.site.c++;
+          break;
+        }
+        case oeste:
+        {
+          fin.site.c--;
+          break;
+        }
+        }
+        if (fin.site.f >= 0 && fin.site.f < mapaResultado.size() &&
+            fin.site.c >= 0 && fin.site.c < mapaResultado[0].size())
+        {
+
+          plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
+          hayPlan = !plan.empty();
+        }
+        else
+        {
+          cout << "ERROR: El objetivo calculado está fuera del mapa!" << endl;
+          hayPlan = false;
+        }
+      }
+      else if (hayPlan and !plan.empty())
+      {
+        cout << "Hay plan y no está vacío" << plan.size() << endl;
+        accion = plan.front();
+        plan.pop_front();
+        if (plan.empty())
+          hayPlan = false;
+      }
+    }
+    break;
+  }
+
+  case ESPERAR_LLAMADA:
+  {
+    if (sensores.venpaca)
+    {
+      if (!llegaBelk)
+      {
+        estado_instalacion = IR_A_BELKANITA;
+      }
+      estado_instalacion = ACERCARSE;
+    }
+    break;
+  }
+
+  case ORIENTARSE:
+  {
+
+    cout << "Me voy a orientar" << endl;
+    EstadoT pos_actual = {sensores.posF, sensores.posC, norte};
+    EstadoT pos_objetivo = {sensores.GotoF, sensores.GotoC, norte};
+    Orientacion necesaria = calcularOrientacion(pos_actual, pos_objetivo);
+
+    if (sensores.rumbo != necesaria)
+    {
+      accion = girarHacia((Orientacion)sensores.rumbo, necesaria);
+    }
+    else
+    {
+      estado_instalacion = INSTALAR_T;
+    }
+    break;
+  }
+
+  case INSTALAR_T:
+  {
+    accion = INSTALL;
+    estado_instalacion = ESPERAR_LLAMADA;
+  }
+  }
+  }
+
+  cout << estado_instalacion << endl;
+  return accion;
 }
 
 /**

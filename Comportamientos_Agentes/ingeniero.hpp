@@ -10,6 +10,15 @@
 
 #include "comportamientos/comportamiento.hpp"
 
+enum EstadoInstalacion
+{
+  MOVER_A_POSICION,
+  PREPARAR_TERRENO,
+  ORIENTARSE_Y_LLAMAR,
+  ESPERAR_TECNICO,
+  INSTALAR
+};
+
 struct EstadoI
 {
   ubicacion site;
@@ -50,16 +59,16 @@ struct NodoTub
 {
   int f,c;
   int altura;
-  int g;
-  int h;
+  int g=0;
+  int h=0;
   list<Paso> secuencia;
 
   int fh() const{
     return g+h;
   }
 
-  int energia_acumulada;
-  int impacto_acumulado;
+  int energia_acumulada=0;
+  int impacto_acumulado=0;
 
   bool operator>(const NodoTub &nodo) const{
     if(fh() != nodo.fh()){
@@ -76,7 +85,7 @@ struct NodoTub
   }
 
   bool operator==(const NodoTub &nodo) const{
-    return f==nodo.f and c == nodo.c and altura == nodo.altura;
+    return f==nodo.f and c == nodo.c and altura == nodo.altura; 
   }
 
 };
@@ -100,6 +109,14 @@ public:
     giro45Izq = 0;
     giros_forzados = 0;
     llegaBelk=false;
+    hayPlan=false;
+    plan = list<Action>();
+    plan_tuberias=list<Paso>();
+    plantas_residuos=list<NodoTub>();
+    planta_objetivo = NodoTub();
+    estado_instalacion = MOVER_A_POSICION;
+    indice_tuberia = 0;
+    terreno_preparado = false;
   }
 
   /**
@@ -291,7 +308,9 @@ private:
   bool llegaBelk;
   NodoTub planta_objetivo;
   bool terreno_preparado;
-  bool construyendo;
+  
+  EstadoInstalacion estado_instalacion;
+  int indice_tuberia;
 };
 
 #endif

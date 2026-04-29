@@ -636,20 +636,20 @@ int ComportamientoIngeniero::impactoInstall(unsigned char terr)
 list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
 {
 
-  NodoTub nodo_actual = inicio;
-  nodo_actual.g = 0;
-  nodo_actual.h = 0;
+  NodoTub nodo_actual_0 = inicio;
+  nodo_actual_0.g = 0;
+  nodo_actual_0.h = 0;
   priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
   set<NodoTub> explored;
 
   Paso inicial = {inicio.f, inicio.c, 0};
-  nodo_actual.secuencia.push_back(inicial);
-  frontier.push(nodo_actual);
-  // explored.insert(nodo_actual);
+  nodo_actual_0.secuencia.push_back(inicial);
+
+  frontier.push(nodo_actual_0);
 
   while (!frontier.empty())
   {
-    nodo_actual = frontier.top();
+    NodoTub nodo_actual = frontier.top();
     frontier.pop();
 
     // condicion de parada
@@ -736,7 +736,6 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         if (explored.find(hijo) == explored.end())
         {
-
           frontier.push(hijo);
         }
       }
@@ -785,119 +784,175 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
   return IDLE;
 }
 
+Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
+{
+  int dif_f = hacia.site.f - desde.site.f;
+  int dif_c = hacia.site.c - desde.site.c;
+
+ if (dif_f == -1)
+    return norte;
+  if (dif_c == 1)
+    return este;
+  if (dif_f == 1)
+    return sur;
+  if (dif_c == -1)
+    return oeste;
+
+  return norte;
+}
+
+Action girarHacia(Orientacion actual, Orientacion objetivo)
+{
+  int diferencia = (objetivo-actual + 8) % 8;
+
+  if(diferencia <= 4) return TURN_SR;
+  return TURN_SL;
+}
+
 /**
  * @brief Comportamiento del ingeniero para el Nivel 5.
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
+// Añade esta variable al .hpp si no la tienes (para saber si acabas de hacer RAISE/DIG)
+// bool terreno_preparado = false;
+
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
   Action accion = IDLE;
-  if (!hayPlan and !llegaBelk)
-  {
-    EstadoI inicio, fin;
-    inicio.site.f = sensores.posF;
-    inicio.site.c = sensores.posC;
-    inicio.site.brujula = sensores.rumbo;
-    inicio.zapatillas = tiene_zapatillas;
-    fin.site.f = sensores.BelPosF;
-    fin.site.c = sensores.BelPosC;
-    plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
-    VisualizaPlan(inicio.site, plan);
-    hayPlan = plan.size() != 0;
-  }
-  if (hayPlan and !llegaBelk)
-  {
-    accion = plan.front();
-    plan.pop_front();
 
-    if (plan.size() == 0)
+  // --- FASE 1: LLEGADA A LA BELKANITA ---
+  if (!llegaBelk)
+  {
+    if (!hayPlan)
     {
-      llegaBelk = true;
-      hayPlan = false;
-      ComportamientoIngenieroNivel_4(sensores);
-      hayPlan = false;
+      EstadoI inicio, fin;
+      inicio.site.f = sensores.posF;
+      inicio.site.c = sensores.posC;
+      inicio.site.brujula = sensores.rumbo;
+      inicio.zapatillas = tiene_zapatillas;
+      fin.site.f = sensores.BelPosF;
+      fin.site.c = sensores.BelPosC;
+      plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+      hayPlan = !plan.empty();
     }
-  }
-
-  // Construcción tramo a tramo
-
-  if (llegaBelk and !plan_tuberias.empty())
-  {
-    Paso tramo_actual = plan_tuberias.front();
-
-    if (sensores.posF != tramo_actual.fil || sensores.posC != tramo_actual.col)
+    
+    if (hayPlan && !plan.empty())
     {
-      if (!hayPlan)
-      {
-        EstadoI p_inicio = {sensores.posF, sensores.posC, sensores.rumbo};
-        EstadoI p_fin = {tramo_actual.fil, tramo_actual.col, sensores.rumbo};
-        plan = B_Anchura(p_inicio, p_fin, mapaResultado, mapaCotas);
-        hayPlan = true;
-      }
       accion = plan.front();
       plan.pop_front();
-      if (plan.size() == 0)
+
+      if (plan.empty())
+      {
+        llegaBelk = true;
         hayPlan = false;
-      return accion;
-    }
-
-    //miramos hacia la siguiente casilla, nos orientamos bien
-
-    int rumboDeseado = -1;
-    if (plan_tuberias.size() > 1)
-    {
-      auto it = plan_tuberias.begin();
-      ++it; // Miramos el siguiente en la lista
-      if (it->fil < sensores.posF)
-        rumboDeseado = 0;
-      else if (it->fil > sensores.posF)
-        rumboDeseado = 4;
-      else if (it->col > sensores.posC)
-        rumboDeseado = 2;
-      else if (it->col < sensores.posC)
-        rumboDeseado = 6;
-    }
-
-    // Si no estoy mirando a donde debo, giro antes de hacer nada más
-    if (rumboDeseado != -1 && sensores.rumbo != rumboDeseado)
-    {
-      int diff = (rumboDeseado - sensores.rumbo + 8) % 8;
-      if (diff <= 4)
-        return TURN_SR;
-      else
-        return TURN_SL;
-    }
-
-    // operaciones DIG o RAISE
-    if (!terreno_preparado)
-    {
-      if (tramo_actual.op == -1)
-      {
-        terreno_preparado = true;
-        return DIG;
-      }
-      else if (tramo_actual.op == 1)
-      {
-        terreno_preparado = true;
-        return RAISE;
-      }
-      else
-      {
-        terreno_preparado = true;
+        ComportamientoIngenieroNivel_4(sensores);
+        // Empezamos la construcción. El Ingeniero lidera, así que va al nodo 1.
+        // El Técnico se pondrá en el nodo 0 (la Belkanita).
+        indice_tuberia = 1; 
+        estado_instalacion = MOVER_A_POSICION;
+        terreno_preparado = false;
       }
     }
+    return accion;
+  }
 
-    // si tenemos al técnico frente mi lo instalamos, sino lo llamados
-    if (sensores.enfrente)
+  // ya hemos llegado a la belkanita, construimos
+  if (!plan_tuberias.empty() && indice_tuberia < plan_tuberias.size())
+  {
+    // Obtener nodo actual (donde se pone el Ingeniero)
+    auto it_actual = plan_tuberias.begin();
+    advance(it_actual, indice_tuberia);
+    EstadoI pos_objetivo = {it_actual->fil, it_actual->col, norte};
+
+    // Obtener nodo anterior (donde se pondrá el Técnico)
+    auto it_anterior = plan_tuberias.begin();
+    advance(it_anterior, indice_tuberia - 1);
+    EstadoI pos_anterior = {it_anterior->fil, it_anterior->col, norte};
+
+    switch (estado_instalacion)
     {
-      plan_tuberias.pop_front();
-      terreno_preparado = false;
-      return INSTALL;
-    }
-    else
-    {
-      return COME;
+      case MOVER_A_POSICION:
+      {
+        if (sensores.posF == pos_objetivo.site.f && sensores.posC == pos_objetivo.site.c)
+        {
+          estado_instalacion = PREPARAR_TERRENO;
+          terreno_preparado = false;
+        }
+        else
+        {
+          if (plan.empty())
+          {
+            EstadoI inicio = {sensores.posF, sensores.posC, sensores.rumbo};
+            EstadoI fin = {pos_objetivo.site.f, pos_objetivo.site.c, norte};
+            plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+          }
+          
+          if (!plan.empty())
+          {
+            accion = plan.front();
+            plan.pop_front();
+          }
+        }
+        break;
+      }
+
+      case PREPARAR_TERRENO:
+      {
+        if (!terreno_preparado)
+        {
+          int oper = it_actual->op;
+          terreno_preparado = true; // Lo marcamos como hecho, haga o no haga nada
+          
+          if (oper == 1) { accion = RAISE; break; }
+          else if (oper == -1) { accion = DIG; break; }
+          // Si op == 0, pasa directamente al estado ORIENTARSE en este mismo tick
+        }
+        
+        estado_instalacion = ORIENTARSE_Y_LLAMAR;
+        // No hay break intencional aquí si no hay acción física, fluye al siguiente case.
+      }
+
+      case ORIENTARSE_Y_LLAMAR:
+      {
+        EstadoI pos_actual = {sensores.posF, sensores.posC, norte};
+        Orientacion necesaria = calcularOrientacion(pos_actual, pos_anterior);
+
+        if (sensores.rumbo != necesaria)
+        {
+          accion = girarHacia((Orientacion)sensores.rumbo, necesaria);
+        }
+        else
+        {
+          accion = COME;
+          estado_instalacion = ESPERAR_TECNICO;
+        }
+        break;
+      }
+
+      case ESPERAR_TECNICO:
+      {
+        if (sensores.enfrente)
+        {
+          estado_instalacion = INSTALAR;
+          accion = IDLE;
+        }
+        else
+        {
+          accion = COME;
+        }
+        break;
+      }
+
+      case INSTALAR:
+      {
+        accion = INSTALL;
+        indice_tuberia++;
+        estado_instalacion = MOVER_A_POSICION;
+        // Al instalar, también vaciamos la lista de pasos para ahorrar memoria (opcional)
+        // Pero controlando por indice_tuberia es suficiente.
+        break;
+      }
     }
   }
 

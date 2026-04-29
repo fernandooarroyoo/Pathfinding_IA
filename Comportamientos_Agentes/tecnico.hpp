@@ -20,6 +20,15 @@
  * El técnico colabora con el ingeniero para resolver el problema de instalación de tuberías
  */
 
+ enum EstadoInstalacionT
+ {
+  IR_A_BELKANITA,
+  ESPERAR_LLAMADA,
+  ACERCARSE,
+  ORIENTARSE,
+  INSTALAR_T
+ };
+
 struct EstadoT
 {
   ubicacion site;
@@ -85,6 +94,8 @@ public:
     last_action = IDLE;
     tiene_zapatillas = false;
     giro45Izq = 0;
+    estado_instalacion = ESPERAR_LLAMADA;
+    llegaBelk = false;
   }
 
   /**
@@ -262,6 +273,10 @@ protected:
 
   int modifica_altura(Action accion, unsigned char terreno, int altura_origen, int altura_destino);
 
+
+  Orientacion calcularOrientacion(EstadoT desde, EstadoT hacia);
+
+  Action girarHacia(Orientacion actual, Orientacion objetivo);
   private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
@@ -275,6 +290,11 @@ protected:
   // nivel E
   bool hayPlan;
   list<Action> plan;
+
+
+  bool llegaBelk;
+
+  EstadoInstalacionT estado_instalacion;
 };
 
 #endif
