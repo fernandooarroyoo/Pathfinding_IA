@@ -652,10 +652,14 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
     NodoTub nodo_actual = frontier.top();
     frontier.pop();
 
+    if (explored.find(nodo_actual) != explored.end())
+      continue;
+
+    explored.insert(nodo_actual);
     // condicion de parada
     for (const auto &p : final)
     {
-      if (nodo_actual.f == p.f and nodo_actual.c == p.c and nodo_actual.impacto_acumulado<maximo_impacto)
+      if (nodo_actual.f == p.f and nodo_actual.c == p.c and nodo_actual.impacto_acumulado < maximo_impacto)
       {
         planta_objetivo.f = p.f;
         planta_objetivo.c = p.c;
@@ -677,7 +681,8 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
       }
 
       unsigned char terr = terreno[vf][vc];
-      if (terr == 'M' || terr == 'P' || terr == 'B'){
+      if (terr == 'M' || terr == 'P' || terr == 'B')
+      {
         continue; // miramos si la casilla es accesible
       };
 
@@ -692,8 +697,9 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         int altura_vecino = altura_origen + op;
 
-        if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1)){
-          
+        if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1))
+        {
+
           continue; // regla de la gravedad
         }
 
@@ -707,7 +713,8 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         int energia_restante = nodo_actual.energia_acumulada - energia_paso;
         int impacto_total = nodo_actual.impacto_acumulado + impacto_paso;
 
-        if (impacto_total > maximo_impacto || energia_restante < 0){
+        if (impacto_total > maximo_impacto || energia_restante < 0)
+        {
           continue; // si superan el umbral no las queremos
         }
 
@@ -809,7 +816,7 @@ list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, 
   frontier.push(current_node);
   explored.insert(current_node);
 
-  Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL,DIG,RAISE};
+  Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL, DIG, RAISE};
 
   while (!frontier.empty())
   {
@@ -842,7 +849,7 @@ list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, 
       // compruebo si he llegado a la meta
       if (child.estado.site.f == final.site.f && child.estado.site.c == final.site.c)
       {
-        return child.secuencia; 
+        return child.secuencia;
       }
 
       // miro si esta explorado, y lo meto en la cola frontier
@@ -858,13 +865,12 @@ list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, 
   return list<Action>();
 }
 
-
 Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
 {
   int dif_f = hacia.site.f - desde.site.f;
   int dif_c = hacia.site.c - desde.site.c;
 
- if (dif_f == -1)
+  if (dif_f == -1)
     return norte;
   if (dif_c == 1)
     return este;
@@ -878,9 +884,10 @@ Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
 
 Action girarHacia(Orientacion actual, Orientacion objetivo)
 {
-  int diferencia = (objetivo-actual + 8) % 8;
+  int diferencia = (objetivo - actual + 8) % 8;
 
-  if(diferencia <= 4) return TURN_SR;
+  if (diferencia <= 4)
+    return TURN_SR;
   return TURN_SL;
 }
 
@@ -890,13 +897,13 @@ Action girarHacia(Orientacion actual, Orientacion objetivo)
  * @return Acción a realizar.
  */
 
-
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
   Action accion = IDLE;
 
-  //cuando empecemos
-  if(!llegaBelk){
+  // cuando empecemos
+  if (!llegaBelk)
+  {
     ComportamientoIngenieroNivel_4(sensores);
     llegaBelk = true;
     indice_tuberia = 1;
@@ -904,7 +911,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
     terreno_preparado = false;
   }
 
- //llegamos a belkanita, toca construir
+  // llegamos a belkanita, toca construir
   if (!plan_tuberias.empty() && indice_tuberia < plan_tuberias.size())
   {
 
@@ -918,84 +925,92 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
 
     switch (estado_instalacion)
     {
-      case MOVER_A_POSICION:
+    case MOVER_A_POSICION:
+    {
+      if (sensores.posF == pos_objetivo.site.f && sensores.posC == pos_objetivo.site.c)
       {
-        if (sensores.posF == pos_objetivo.site.f && sensores.posC == pos_objetivo.site.c)
+        estado_instalacion = PREPARAR_TERRENO;
+        terreno_preparado = false;
+      }
+      else
+      {
+        if (plan.empty())
         {
-          estado_instalacion = PREPARAR_TERRENO;
-          terreno_preparado = false;
+          EstadoI inicio = {sensores.posF, sensores.posC, sensores.rumbo};
+          EstadoI fin = {pos_objetivo.site.f, pos_objetivo.site.c, norte};
+          plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
         }
-        else
+
+        if (!plan.empty())
         {
-          if (plan.empty())
-          {
-            EstadoI inicio = {sensores.posF, sensores.posC, sensores.rumbo};
-            EstadoI fin = {pos_objetivo.site.f, pos_objetivo.site.c, norte};
-            plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
-          }
-          
-          if (!plan.empty())
-          {
-            accion = plan.front();
-            plan.pop_front();
-          }
+          accion = plan.front();
+          plan.pop_front();
         }
-        break;
+      }
+      break;
+    }
+
+    case PREPARAR_TERRENO:
+    {
+      if (!terreno_preparado)
+      {
+        int oper = it_actual->op;
+        terreno_preparado = true;
+
+        if (oper == 1)
+        {
+          accion = RAISE;
+          break;
+        }
+        else if (oper == -1)
+        {
+          accion = DIG;
+          break;
+        }
       }
 
-      case PREPARAR_TERRENO:
+      estado_instalacion = ORIENTARSE_Y_LLAMAR;
+    }
+
+    case ORIENTARSE_Y_LLAMAR:
+    {
+      EstadoI pos_actual = {sensores.posF, sensores.posC, norte};
+      Orientacion necesaria = calcularOrientacion(pos_actual, pos_anterior);
+
+      if (sensores.rumbo != necesaria)
       {
-        if (!terreno_preparado)
-        {
-          int oper = it_actual->op;
-          terreno_preparado = true;
-          
-          if (oper == 1) { accion = RAISE; break; }
-          else if (oper == -1) { accion = DIG; break; }
-        }
-        
-        estado_instalacion = ORIENTARSE_Y_LLAMAR;
+        accion = girarHacia((Orientacion)sensores.rumbo, necesaria);
       }
-
-      case ORIENTARSE_Y_LLAMAR:
+      else
       {
-        EstadoI pos_actual = {sensores.posF, sensores.posC, norte};
-        Orientacion necesaria = calcularOrientacion(pos_actual, pos_anterior);
-
-        if (sensores.rumbo != necesaria)
-        {
-          accion = girarHacia((Orientacion)sensores.rumbo, necesaria);
-        }
-        else
-        {
-          accion = COME;
-          estado_instalacion = ESPERAR_TECNICO;
-        }
-        break;
+        accion = COME;
+        estado_instalacion = ESPERAR_TECNICO;
       }
+      break;
+    }
 
-      case ESPERAR_TECNICO:
-      {
-        if (sensores.enfrente)
-        {
-          accion=INSTALL;
-          indice_tuberia++;
-          estado_instalacion = MOVER_A_POSICION;
-        }
-        else
-        {
-          accion = COME;
-        }
-        break;
-      }
-
-      case INSTALAR:
+    case ESPERAR_TECNICO:
+    {
+      if (sensores.enfrente)
       {
         accion = INSTALL;
         indice_tuberia++;
         estado_instalacion = MOVER_A_POSICION;
-        break;
       }
+      else
+      {
+        accion = COME;
+      }
+      break;
+    }
+
+    case INSTALAR:
+    {
+      accion = INSTALL;
+      indice_tuberia++;
+      estado_instalacion = MOVER_A_POSICION;
+      break;
+    }
     }
   }
 
