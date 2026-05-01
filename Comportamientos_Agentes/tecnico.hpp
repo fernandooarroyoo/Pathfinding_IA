@@ -38,6 +38,14 @@ struct EstadoT
   {
     return site == st.site and zapatillas == st.zapatillas;
   }
+
+  bool operator<(const EstadoT &st) const
+  {
+    if (site.f != st.site.f) return site.f < st.site.f;
+    if (site.c != st.site.c) return site.c < st.site.c;
+    if (site.brujula != st.site.brujula) return site.brujula < st.site.brujula;
+    return zapatillas < st.zapatillas;
+  }
 };
 
 struct NodoT

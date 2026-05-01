@@ -589,17 +589,19 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 
       // comprobamos que no se choca contra un muro, para evitar un bucle infinito
 
-      if (accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c)
+     if (accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c)
       {
         continue; // descartamos al hijo porque el movimiento es ilegal, applyT ha dicho que por ahí no se puede
       }
+      
 
       unsigned char terreno_origen = terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
+      unsigned char terreno_destino = terreno[hijo.estado.site.f][hijo.estado.site.c];
       int alt_origen = altura[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
       int alt_destino = altura[hijo.estado.site.f][hijo.estado.site.c];
 
       int coste = CalculoEnergia(accion, terreno_origen);
-      int mod_altura = modifica_altura(accion, terreno_origen, alt_origen, alt_destino);
+      int mod_altura = modifica_altura(accion, terreno_destino, alt_origen, alt_destino);
 
       hijo.g = nodo_actual.g + coste + mod_altura;
 

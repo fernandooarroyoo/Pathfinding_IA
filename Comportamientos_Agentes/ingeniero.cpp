@@ -806,7 +806,6 @@ list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, 
   frontier.push(current_node);
   explored.insert(current_node);
 
-  // Las 4 acciones permitidas en el lv2
   Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL,DIG,RAISE};
 
   while (!frontier.empty())
@@ -840,7 +839,7 @@ list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, 
       // compruebo si he llegado a la meta
       if (child.estado.site.f == final.site.f && child.estado.site.c == final.site.c)
       {
-        return child.secuencia; // ¡Encontrado el camino más corto en instantes!
+        return child.secuencia; 
       }
 
       // miro si esta explorado, y lo meto en la cola frontier
@@ -887,47 +886,12 @@ Action girarHacia(Orientacion actual, Orientacion objetivo)
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
-// Añade esta variable al .hpp si no la tienes (para saber si acabas de hacer RAISE/DIG)
-// bool terreno_preparado = false;
+
 
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
   Action accion = IDLE;
-/*
-  if (!llegaBelk)
-  {
-    if (!hayPlan)
-    {
-      EstadoI inicio, fin;
-      inicio.site.f = sensores.posF;
-      inicio.site.c = sensores.posC;
-      inicio.site.brujula = sensores.rumbo;
-      inicio.zapatillas = tiene_zapatillas;
-      fin.site.f = sensores.BelPosF;
-      fin.site.c = sensores.BelPosC;
-      plan = B_Anchura_Mejorada(inicio, fin, mapaResultado, mapaCotas);
-      hayPlan = !plan.empty();
-    }
-    
-    if (hayPlan && !plan.empty())
-    {
-      accion = plan.front();
-      plan.pop_front();
 
-      if (plan.empty())
-      {
-        llegaBelk = true;
-        hayPlan = false;
-        ComportamientoIngenieroNivel_4(sensores);
-      
-        indice_tuberia = 1; 
-        estado_instalacion = MOVER_A_POSICION;
-        terreno_preparado = false;
-      }
-    }
-    return accion;
-  }
-*/
   //cuando empecemos
   if(!llegaBelk){
     ComportamientoIngenieroNivel_4(sensores);
