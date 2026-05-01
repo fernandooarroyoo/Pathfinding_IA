@@ -655,15 +655,13 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
     // condicion de parada
     for (const auto &p : final)
     {
-      if (nodo_actual.f == p.f and nodo_actual.c == p.c)
+      if (nodo_actual.f == p.f and nodo_actual.c == p.c and nodo_actual.impacto_acumulado<maximo_impacto)
       {
         planta_objetivo.f = p.f;
         planta_objetivo.c = p.c;
         return nodo_actual.secuencia;
       }
     }
-
-    explored.insert(nodo_actual);
 
     int df[] = {-1, 1, 0, 0};
     int dc[] = {0, 0, 1, -1};
@@ -679,8 +677,9 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
       }
 
       unsigned char terr = terreno[vf][vc];
-      if (terr == 'M' || terr == 'P')
+      if (terr == 'M' || terr == 'P' || terr == 'B'){
         continue; // miramos si la casilla es accesible
+      };
 
       int altura_origen = altura[vf][vc];
       for (int op = -1; op <= 1; op++)
@@ -693,8 +692,10 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         int altura_vecino = altura_origen + op;
 
-        if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1))
+        if (!(nodo_actual.altura == altura_vecino || nodo_actual.altura == altura_vecino + 1)){
+          
           continue; // regla de la gravedad
+        }
 
         // la energia de install es comun a todos, lo que hay que sumar es si se hace raise o dig
         int energia_paso = energiaInstall(terr);
@@ -706,8 +707,9 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         int energia_restante = nodo_actual.energia_acumulada - energia_paso;
         int impacto_total = nodo_actual.impacto_acumulado + impacto_paso;
 
-        if (impacto_total > maximo_impacto || energia_restante < 0)
+        if (impacto_total > maximo_impacto || energia_restante < 0){
           continue; // si superan el umbral no las queremos
+        }
 
         // Si se llega hasta aquí, todo está correcto -> podemos crear el hijo
         NodoTub hijo;
@@ -742,6 +744,7 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
     }
   }
 
+  cout << "No encuentro el camino a la planta" << endl;
   return list<Paso>();
 }
 
