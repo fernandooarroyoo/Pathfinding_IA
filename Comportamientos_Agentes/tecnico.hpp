@@ -79,7 +79,10 @@ struct NodoT
   }
 
   bool operator>(const NodoT &nodo) const{
-    return f() > nodo.f();
+    if(f() != nodo.f()){
+      return f() > nodo.f();
+    }
+    return g > nodo.g;
   }
 };
 

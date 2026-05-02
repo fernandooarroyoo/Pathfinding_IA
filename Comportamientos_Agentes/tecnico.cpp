@@ -548,13 +548,14 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   NodoT nodo_actual;
 
   priority_queue<NodoT, vector<NodoT>, greater<NodoT>> frontier; // ordenamos de forma ascendente
-  set<NodoT> explored;
+  //set<NodoT> explored;
+  map<EstadoT,int> explored;
 
   nodo_actual.estado = inicio;
   nodo_actual.g = 0;
   nodo_actual.h = 0;
 
-  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
+  /*if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
   {
     return list<Action>();
   }
@@ -563,9 +564,10 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   {
     nodo_actual.estado.zapatillas = true;
   }
+    */
 
   frontier.push(nodo_actual);
-  explored.insert(nodo_actual);
+  //explored.insert(nodo_actual);
 
   Action posibles_acciones[] = {WALK, TURN_SL, TURN_SR};
   while (!frontier.empty())
@@ -579,7 +581,12 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
       return nodo_actual.secuencia;
     }
 
-    explored.insert(nodo_actual);
+    //explored.insert(nodo_actual);
+    if(explored.count(nodo_actual.estado) and explored[nodo_actual.estado] <= nodo_actual.g){
+      continue;
+    }
+    explored[nodo_actual.estado] = nodo_actual.g;
+
 
     for (Action accion : posibles_acciones)
     {
@@ -614,10 +621,13 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 
       hijo.secuencia.push_back(accion);
 
-      if (explored.find(hijo) == explored.end())
+      if(terreno[hijo.estado.site.f][hijo.estado.site.c] == 'D')
       {
-        frontier.push(hijo);
+        hijo.estado.zapatillas = true;
       }
+      
+      frontier.push(hijo);
+      
     }
   }
 

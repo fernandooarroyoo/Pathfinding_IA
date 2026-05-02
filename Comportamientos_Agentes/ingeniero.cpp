@@ -641,11 +641,20 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
   nodo_actual_0.h = 0;
   priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
   set<NodoTub> explored;
+  NodoTub inicial_2,inicial_3;
+  inicial_2 = nodo_actual_0;
+  inicial_3 = nodo_actual_0; 
 
   Paso inicial = {inicio.f, inicio.c, 0};
+  Paso inicialp_2 = {inicio.f,inicio.c,-1};
+  Paso inicialp_3 = {inicio.f,inicio.c,1};
   nodo_actual_0.secuencia.push_back(inicial);
+  inicial_2.secuencia.push_back(inicialp_2);
+  inicial_3.secuencia.push_back(inicialp_3);
 
   frontier.push(nodo_actual_0);
+  frontier.push(inicial_2);
+  frontier.push(inicial_3);
 
   while (!frontier.empty())
   {
