@@ -16,7 +16,8 @@ enum EstadoInstalacion
   PREPARAR_TERRENO,
   ORIENTARSE_Y_LLAMAR,
   ESPERAR_TECNICO,
-  INSTALAR
+  INSTALAR,
+  RECONOCER
 };
 
 struct EstadoI
@@ -57,66 +58,79 @@ struct NodoI
 
 struct NodoTub
 {
-  int f,c;
+  int f, c;
   int altura;
-  int g=0;
-  int h=0;
+  int g = 0;
+  int h = 0;
   list<Paso> secuencia;
 
-  int fh() const{
-    return g+h;
+  int fh() const
+  {
+    return g + h;
   }
 
-  int energia_acumulada=0;
-  int impacto_acumulado=0;
+  int energia_acumulada = 0;
+  int impacto_acumulado = 0;
 
-  bool operator>(const NodoTub &nodo) const{
-    if(fh() != nodo.fh()){
+  bool operator>(const NodoTub &nodo) const
+  {
+    if (fh() != nodo.fh())
+    {
       return fh() > nodo.fh();
     }
 
-    return impacto_acumulado > nodo.impacto_acumulado; //en caso de empate de heurística cogemo el que menos energía lleve gastada
+    if (g != nodo.g)
+    {
+      return g > nodo.g;
+    }
+
+    return impacto_acumulado > nodo.impacto_acumulado; // en caso de empate de heurística
   }
 
-  bool operator<(const NodoTub &nodo) const {
-    if (f != nodo.f) return f < nodo.f;
-    if (c != nodo.c) return c < nodo.c;
+  bool operator<(const NodoTub &nodo) const
+  {
+
+    if (f != nodo.f)
+      return f < nodo.f;
+    if (c != nodo.c)
+      return c < nodo.c;
     return altura < nodo.altura;
   }
 
-  bool operator==(const NodoTub &nodo) const{
-    return f==nodo.f and c == nodo.c and altura == nodo.altura; 
+  bool operator==(const NodoTub &nodo) const
+  {
+    return f == nodo.f and c == nodo.c and altura == nodo.altura;
   }
-
 };
 
-
-
-class ComportamientoIngeniero : public Comportamiento {
+class ComportamientoIngeniero : public Comportamiento
+{
 public:
   // =========================================================================
   // CONSTRUCTORES
   // =========================================================================
-  
+
   /**
    * @brief Constructor para niveles 0, 1 y 6 (sin mapa completo)
    * @param size Tamaño del mapa (si es 0, se inicializa más tarde)
    */
-  ComportamientoIngeniero(unsigned int size = 0) : Comportamiento(size) {
+  ComportamientoIngeniero(unsigned int size = 0) : Comportamiento(size)
+  {
     // Inicializar Variables de Estado
     last_action = IDLE;
     tiene_zapatillas = false;
     giro45Izq = 0;
     giros_forzados = 0;
-    llegaBelk=false;
-    hayPlan=false;
+    llegaBelk = false;
+    hayPlan = false;
     plan = list<Action>();
-    plan_tuberias=list<Paso>();
-    plantas_residuos=list<NodoTub>();
+    plan_tuberias = list<Paso>();
+    plantas_residuos = list<NodoTub>();
     planta_objetivo = NodoTub();
     estado_instalacion = MOVER_A_POSICION;
     indice_tuberia = 0;
     terreno_preparado = false;
+    mapaTrabajable = plantaEncontrada = false;
   }
 
   /**
@@ -124,9 +138,9 @@ public:
    * @param mapaR Mapa de terreno conocido
    * @param mapaC Mapa de cotas conocido
    */
-  ComportamientoIngeniero(std::vector<std::vector<unsigned char>> mapaR, 
-                         std::vector<std::vector<unsigned char>> mapaC): 
-                         Comportamiento(mapaR, mapaC) {
+  ComportamientoIngeniero(std::vector<std::vector<unsigned char>> mapaR,
+                          std::vector<std::vector<unsigned char>> mapaC) : Comportamiento(mapaR, mapaC)
+  {
     // Inicializar Variables de Estado
   }
 
@@ -137,14 +151,15 @@ public:
   /**
    * @brief Bucle principal de decisión del agente.
    * Estudia los sensores y decide la siguiente acción.
-   * 
+   *
    * EJEMPLO DE USO:
    * Action accion = think(sensores);
    * return accion; // El motor ejecutará esta acción
    */
   Action think(Sensores sensores);
 
-  ComportamientoIngeniero *clone() {
+  ComportamientoIngeniero *clone()
+  {
     return new ComportamientoIngeniero(*this);
   }
 
@@ -153,49 +168,49 @@ public:
   // =========================================================================
 
   // Funciones específicas para cada nivel (para ser implementadas por el alumno)
-  
+
   /**
    * @brief Implementación del Nivel 0.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
    */
   Action ComportamientoIngenieroNivel_0(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 1.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
    */
   Action ComportamientoIngenieroNivel_1(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 2.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
-   */ 
+   */
   Action ComportamientoIngenieroNivel_2(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 3.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
    */
   Action ComportamientoIngenieroNivel_3(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 4.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
    */
   Action ComportamientoIngenieroNivel_4(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 5.
    * @param sensores Datos actuales de los sensores del agente.
    * @return Acción a realizar.
    */
   Action ComportamientoIngenieroNivel_5(Sensores sensores);
-  
+
   /**
    * @brief Implementación del Nivel 6.
    * @param sensores Datos actuales de los sensores del agente.
@@ -245,41 +260,37 @@ protected:
 
   bool es_camino(unsigned char c) const;
 
-list<Action> B_Anchura_Mejorada(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
-
   /**
- * @brief Imprime por consola la secuencia de acciones de un plan para un agente.
- * @param plan  Lista de acciones del plan.
- */
+   * @brief Imprime por consola la secuencia de acciones de un plan para un agente.
+   * @param plan  Lista de acciones del plan.
+   */
   void PintaPlan(const list<Action> &plan);
 
-
-/**
- * @brief Imprime las coordenadas y operaciones de un plan de tubería.
- * @param plan  Lista de pasos (fila, columna, operación).
- */
+  /**
+   * @brief Imprime las coordenadas y operaciones de un plan de tubería.
+   * @param plan  Lista de pasos (fila, columna, operación).
+   */
   void PintaPlan(const list<Paso> &plan);
 
-
   /**
- * @brief Convierte un plan de acciones en una lista de casillas para
- *        su visualización en el mapa gráfico.
- * @param st    Estado de partida.
- * @param plan  Lista de acciones del plan.
- */
+   * @brief Convierte un plan de acciones en una lista de casillas para
+   *        su visualización en el mapa gráfico.
+   * @param st    Estado de partida.
+   * @param plan  Lista de acciones del plan.
+   */
   void VisualizaPlan(const ubicacion &st, const list<Action> &plan);
 
   /**
- * @brief Convierte un plan de tubería en la lista de casillas usada
- *        por el sistema de visualización.
- * @param st    Estado de partida (no utilizado directamente).
- * @param plan  Lista de pasos del plan de tubería.
- */
+   * @brief Convierte un plan de tubería en la lista de casillas usada
+   *        por el sistema de visualización.
+   * @param st    Estado de partida (no utilizado directamente).
+   * @param plan  Lista de pasos del plan de tubería.
+   */
   void VisualizaRedTuberias(const list<Paso> &plan);
 
   list<Action> B_Anchura(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura);
 
-  list<Paso>Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura,int maximo_impacto);
+  list<Paso> Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto);
 
   int calcularEnergia(unsigned char terreno, int operacion);
 
@@ -290,6 +301,7 @@ list<Action> B_Anchura_Mejorada(const EstadoI &inicio, const EstadoI &final, con
   int impactoInstall(unsigned char terr);
 
   Action Desplazarse(Sensores sensores);
+
 private:
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
@@ -297,10 +309,9 @@ private:
   Action last_action;
   bool tiene_zapatillas;
   int giro45Izq;
-  int giros_forzados = 0; //variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
+  int giros_forzados = 0; // variable para saber cuantos giros tengo que dar al encontrarme un técnico de frente
 
-  map<pair<int,int>,int> mapa_visitado; //guardar las veces que hemos visitado una casilla, para el nivel 1.
-  
+  map<pair<int, int>, int> mapa_visitado; // guardar las veces que hemos visitado una casilla, para el nivel 1.
 
   bool hayPlan;
   list<Action> plan;
@@ -310,9 +321,11 @@ private:
   bool llegaBelk;
   NodoTub planta_objetivo;
   bool terreno_preparado;
-  
+
   EstadoInstalacion estado_instalacion;
   int indice_tuberia;
+
+  bool mapaTrabajable, plantaEncontrada;
 };
 
 #endif

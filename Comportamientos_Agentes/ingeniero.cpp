@@ -309,6 +309,12 @@ bool CasillaAccesibleIngeniero(const EstadoI &st, const vector<vector<unsigned c
 {
   EstadoI next = NextCasillaIngeniero(st);
 
+  if (next.site.f < 0 || next.site.f >= terreno.size() ||
+      next.site.c < 0 || next.site.c >= terreno[0].size())
+  {
+    return false;
+  }
+
   bool transitable = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M' and
                      terreno[next.site.f][next.site.c] != 'B';
 
@@ -336,6 +342,12 @@ EstadoI applyT(Action accion, const EstadoI &st, const vector<vector<unsigned ch
   case JUMP:
     // casilla intermedia
     intermedia = NextCasillaIngeniero(st);
+
+    if (intermedia.site.f < 0 || intermedia.site.f >= terreno.size() ||
+        intermedia.site.c < 0 || intermedia.site.c >= terreno[0].size())
+    {
+      break;
+    }
 
     // no podemos saltar en medio de un precipicio, por ejemplo
     if (terreno[intermedia.site.f][intermedia.site.c] != 'P' &&
@@ -635,36 +647,35 @@ int ComportamientoIngeniero::impactoInstall(unsigned char terr)
 
 list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
 {
-
   NodoTub nodo_actual_0 = inicio;
   nodo_actual_0.g = 0;
   nodo_actual_0.h = 0;
   priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
-  set<NodoTub> explored;
-  NodoTub inicial_2,inicial_3;
+  map<NodoTub,int> mejor_impacto;
+  NodoTub inicial_2, inicial_3;
   inicial_2 = nodo_actual_0;
-  inicial_3 = nodo_actual_0; 
+  inicial_3 = nodo_actual_0;
 
   Paso inicial = {inicio.f, inicio.c, 0};
-  Paso inicialp_2 = {inicio.f,inicio.c,-1};
-  Paso inicialp_3 = {inicio.f,inicio.c,1};
+  //Paso inicialp_2 = {inicio.f, inicio.c, -1};
+  //Paso inicialp_3 = {inicio.f, inicio.c, 1};
+
   nodo_actual_0.secuencia.push_back(inicial);
-  inicial_2.secuencia.push_back(inicialp_2);
-  inicial_3.secuencia.push_back(inicialp_3);
+  //inicial_2.secuencia.push_back(inicialp_2);
+  //inicial_3.secuencia.push_back(inicialp_3);
 
   frontier.push(nodo_actual_0);
-  frontier.push(inicial_2);
-  frontier.push(inicial_3);
+  //frontier.push(inicial_2);
+  //frontier.push(inicial_3);
 
+  mejor_impacto[nodo_actual_0] = 0;
   while (!frontier.empty())
   {
     NodoTub nodo_actual = frontier.top();
     frontier.pop();
 
-    if (explored.find(nodo_actual) != explored.end())
-      continue;
+    
 
-    explored.insert(nodo_actual);
     // condicion de parada
     for (const auto &p : final)
     {
@@ -724,6 +735,7 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         if (impacto_total > maximo_impacto || energia_restante < 0)
         {
+          
           continue; // si superan el umbral no las queremos
         }
 
@@ -752,8 +764,16 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
         hijo.secuencia = nodo_actual.secuencia;
         hijo.secuencia.push_back(nuevo_paso);
 
-        if (explored.find(hijo) == explored.end())
+        NodoTub clave;
+        clave.f = hijo.f;
+        clave.c = hijo.c;
+        clave.altura = hijo.altura;
+
+        auto it = mejor_impacto.find(clave);
+
+        if(it == mejor_impacto.end() || hijo.impacto_acumulado < it->second)
         {
+          mejor_impacto[clave] = hijo.impacto_acumulado;
           frontier.push(hijo);
         }
       }
@@ -803,76 +823,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
   return IDLE;
 }
 
-list<Action> ComportamientoIngeniero::B_Anchura_Mejorada(const EstadoI &inicio, const EstadoI &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura)
-{
-  NodoI current_node;
-  queue<NodoI> frontier;
-  set<NodoI> explored;
-
-  current_node.estado = inicio;
-
-  // comprobacion inicial
-  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
-  {
-    return list<Action>();
-  }
-  // comprobamos si nacemos en unas zapatillas
-  if (terreno[current_node.estado.site.f][current_node.estado.site.c] == 'D')
-  {
-    current_node.estado.zapatillas = true;
-  }
-
-  frontier.push(current_node);
-  explored.insert(current_node);
-
-  Action posibles_acciones[] = {WALK, JUMP, TURN_SR, TURN_SL, DIG, RAISE};
-
-  while (!frontier.empty())
-  {
-    current_node = frontier.front();
-    frontier.pop();
-
-    for (Action accion : posibles_acciones)
-    {
-      NodoI child = current_node;
-
-      child.estado = applyT(accion, current_node.estado, terreno, altura);
-
-      // si el hijo no ha hecho nada, lo ignoro
-      if (child.estado.site.f == current_node.estado.site.f and
-          child.estado.site.c == current_node.estado.site.c and
-          child.estado.site.brujula == current_node.estado.site.brujula)
-      {
-        continue;
-      }
-
-      // compruebo si estoy en un sitio de zapatillas
-      if (terreno[child.estado.site.f][child.estado.site.c] == 'D')
-      {
-        child.estado.zapatillas = true;
-      }
-
-      // registramos en la secuencia
-      child.secuencia.push_back(accion);
-
-      // compruebo si he llegado a la meta
-      if (child.estado.site.f == final.site.f && child.estado.site.c == final.site.c)
-      {
-        return child.secuencia;
-      }
-
-      // miro si esta explorado, y lo meto en la cola frontier
-      if (explored.find(child) == explored.end())
-      {
-        explored.insert(child);
-        frontier.push(child);
-      }
-    }
-  }
-
-  // si no hemos encontrado nada, devolvemos una lista vacia
-  return list<Action>();
-}
 
 Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
 {
@@ -913,7 +863,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
   // cuando empecemos
   if (!llegaBelk)
   {
-    ComportamientoIngenieroNivel_4(sensores);
+    if (plan_tuberias.empty())
+      ComportamientoIngenieroNivel_4(sensores);
     llegaBelk = true;
     indice_tuberia = 1;
     estado_instalacion = MOVER_A_POSICION;
@@ -979,6 +930,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       }
 
       estado_instalacion = ORIENTARSE_Y_LLAMAR;
+      break;
     }
 
     case ORIENTARSE_Y_LLAMAR:
@@ -1033,7 +985,39 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+  // reconocemos hasta que tengamos U y Belk
+  if (!mapaTrabajable)
+  {
+    accion = ComportamientoIngenieroNivel_1(sensores);
+    if (mapaResultado[sensores.posF][sensores.posC] == 'U')
+    {
+      plantaEncontrada = true;
+      NodoTub planta = {sensores.posF, sensores.posC, mapaCotas[sensores.posF][sensores.posC]};
+      plantas_residuos.push_back(planta);
+    }
+
+    if (plantaEncontrada)
+      mapaTrabajable = true;
+  }
+  else
+  {
+    // encontrar camino desde la belk a la planta
+    NodoTub inicio;
+    inicio.f = sensores.BelPosF;
+    inicio.c = sensores.BelPosC;
+    inicio.altura = mapaCotas[inicio.f][inicio.c];
+    inicio.energia_acumulada = sensores.energia;
+    inicio.impacto_acumulado = 0;
+    inicio.g = 0;
+
+    plan_tuberias = Estrella_tuberias(inicio, plantas_residuos, mapaResultado, mapaCotas, sensores.max_ecologico);
+
+    VisualizaRedTuberias(plan_tuberias);
+
+    
+    return accion;
+  }
 }
 
 // =========================================================================

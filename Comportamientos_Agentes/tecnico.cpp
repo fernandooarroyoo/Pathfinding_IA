@@ -555,7 +555,7 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   nodo_actual.g = 0;
   nodo_actual.h = 0;
 
-  /*if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
+  if (inicio.site.f == final.site.f && inicio.site.c == final.site.c)
   {
     return list<Action>();
   }
@@ -564,7 +564,7 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   {
     nodo_actual.estado.zapatillas = true;
   }
-    */
+    
 
   frontier.push(nodo_actual);
   //explored.insert(nodo_actual);
