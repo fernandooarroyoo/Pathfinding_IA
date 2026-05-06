@@ -647,34 +647,58 @@ int ComportamientoIngeniero::impactoInstall(unsigned char terr)
 
 list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
 {
-  NodoTub nodo_actual_0 = inicio;
-  nodo_actual_0.g = 0;
-  nodo_actual_0.h = 0;
+  
   priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
   map<NodoTub,int> mejor_impacto;
-  NodoTub inicial_2, inicial_3;
-  inicial_2 = nodo_actual_0;
-  inicial_3 = nodo_actual_0;
+  
+  unsigned char terr_ini = terreno[inicio.f][inicio.c];
+  int alt_ori = altura[inicio.f][inicio.c];
 
-  Paso inicial = {inicio.f, inicio.c, 0};
-  //Paso inicialp_2 = {inicio.f, inicio.c, -1};
-  //Paso inicialp_3 = {inicio.f, inicio.c, 1};
+  for(int op = -1 ; op <= 1; op++)
+  {
+    if(op != 0 and terr_ini == 'A') continue;
 
-  nodo_actual_0.secuencia.push_back(inicial);
-  //inicial_2.secuencia.push_back(inicialp_2);
-  //inicial_3.secuencia.push_back(inicialp_3);
+    int alt_ini = alt_ori + op;
+    if(alt_ini < 1 or alt_ini > 9) continue;
 
-  frontier.push(nodo_actual_0);
-  //frontier.push(inicial_2);
-  //frontier.push(inicial_3);
+    int coste_energia_op = calcularEnergia(terr_ini,op);
+    int coste_impacto_op = calcularImpacto(terr_ini,op);
 
-  mejor_impacto[nodo_actual_0] = 0;
+    if(inicio.energia_acumulada - coste_energia_op < 0) continue;
+    if(inicio.impacto_acumulado + coste_impacto_op > maximo_impacto) continue;
+
+    NodoTub nodo_arranque = inicio;
+    nodo_arranque.altura = alt_ini;
+    nodo_arranque.energia_acumulada -= coste_energia_op;
+    nodo_arranque.impacto_acumulado += coste_impacto_op;
+    nodo_arranque.g = 0;
+
+    int dist_min = 200000;
+    for(const auto &p : final)
+    {
+      int dist = abs(p.f - inicio.f) + abs(p.c - inicio.c);
+      if(dist < dist_min) dist_min = dist;
+    }
+
+    nodo_arranque.h = dist_min;
+
+    Paso paso_ini = {inicio.f,inicio.c,op};
+    nodo_arranque.secuencia.push_back(paso_ini);
+
+    frontier.push(nodo_arranque);
+    mejor_impacto[nodo_arranque] = nodo_arranque.impacto_acumulado;
+  }
   while (!frontier.empty())
   {
     NodoTub nodo_actual = frontier.top();
     frontier.pop();
 
-    
+    NodoTub clave_actual;
+    clave_actual.f = nodo_actual.f;
+    clave_actual.c = nodo_actual.c;
+    clave_actual.altura = nodo_actual.altura;
+
+    if(mejor_impacto[clave_actual] < nodo_actual.impacto_acumulado) continue;
 
     // condicion de parada
     for (const auto &p : final)

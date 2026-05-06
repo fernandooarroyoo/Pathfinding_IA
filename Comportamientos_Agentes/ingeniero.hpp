@@ -79,10 +79,11 @@ struct NodoTub
       return fh() > nodo.fh();
     }
 
-    if (g != nodo.g)
+    /*if (g != nodo.g)
     {
       return g > nodo.g;
     }
+      */
 
     return impacto_acumulado > nodo.impacto_acumulado; // en caso de empate de heurística
   }
