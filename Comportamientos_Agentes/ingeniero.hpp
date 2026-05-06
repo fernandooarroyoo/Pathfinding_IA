@@ -16,7 +16,8 @@ enum EstadoInstalacion
   PREPARAR_TERRENO,
   ORIENTARSE_Y_LLAMAR,
   ESPERAR_TECNICO,
-  RECONOCER
+  RECONOCER,
+  
 };
 
 struct EstadoI
@@ -131,6 +132,7 @@ public:
     indice_tuberia = 0;
     terreno_preparado = false;
     mapaTrabajable = plantaEncontrada = false;
+    tuberias = 0;
   }
 
   /**
@@ -142,6 +144,21 @@ public:
                           std::vector<std::vector<unsigned char>> mapaC) : Comportamiento(mapaR, mapaC)
   {
     // Inicializar Variables de Estado
+    last_action = IDLE;
+    tiene_zapatillas = false;
+    giro45Izq = 0;
+    giros_forzados = 0;
+    llegaBelk = false;
+    hayPlan = false;
+    plan = list<Action>();
+    plan_tuberias = list<Paso>();
+    plantas_residuos = list<NodoTub>();
+    planta_objetivo = NodoTub();
+    estado_instalacion = MOVER_A_POSICION;
+    indice_tuberia = 0;
+    terreno_preparado = false;
+    mapaTrabajable = plantaEncontrada = false;
+    tuberias = 0;
   }
 
   ComportamientoIngeniero(const ComportamientoIngeniero &comport)
@@ -324,6 +341,7 @@ private:
 
   EstadoInstalacion estado_instalacion;
   int indice_tuberia;
+  int tuberias;
 
   bool mapaTrabajable, plantaEncontrada;
 };

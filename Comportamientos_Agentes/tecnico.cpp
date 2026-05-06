@@ -967,7 +967,21 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_6(Sensores sensores)
 {
-  return IDLE;
+  Action accion = IDLE;
+  if(tuberias == 0)
+  {
+    accion = ComportamientoTecnicoNivel_1(sensores);
+    if(sensores.venpaca)
+    {
+      tuberias ++;
+    }
+  }
+  else
+  {
+    accion = ComportamientoTecnicoNivel_5(sensores);
+  }
+
+  return accion;
 }
 
 // =========================================================================

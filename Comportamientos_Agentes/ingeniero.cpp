@@ -316,7 +316,7 @@ bool CasillaAccesibleIngeniero(const EstadoI &st, const vector<vector<unsigned c
   }
 
   bool transitable = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M' and
-                     terreno[next.site.f][next.site.c] != 'B';
+                     terreno[next.site.f][next.site.c] != 'B' and terreno[next.site.f][next.site.c] != '?';
 
   int dif_altura = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]);
   bool check_altura = st.zapatillas ? (dif_altura <= 2) : (dif_altura <= 1);
@@ -1050,39 +1050,70 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
  * @return Acción a realizar.
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
+
 {
+
   Action accion = IDLE;
+
   // reconocemos hasta que tengamos U y Belk
+
   if (!mapaTrabajable)
+
   {
     accion = ComportamientoIngenieroNivel_1(sensores);
+
     if (mapaResultado[sensores.posF][sensores.posC] == 'U')
+
     {
+
       plantaEncontrada = true;
+
       NodoTub planta = {sensores.posF, sensores.posC, mapaCotas[sensores.posF][sensores.posC]};
+
       plantas_residuos.push_back(planta);
     }
 
     if (plantaEncontrada)
+
       mapaTrabajable = true;
   }
-  else
+
+  else if(tuberias == 0)
+
   {
+
     // encontrar camino desde la belk a la planta
+
     NodoTub inicio;
+
     inicio.f = sensores.BelPosF;
+
     inicio.c = sensores.BelPosC;
+
     inicio.altura = mapaCotas[inicio.f][inicio.c];
+
     inicio.energia_acumulada = sensores.energia;
+
     inicio.impacto_acumulado = 0;
+
     inicio.g = 0;
 
     plan_tuberias = Estrella_tuberias(inicio, plantas_residuos, mapaResultado, mapaCotas, sensores.max_ecologico);
 
     VisualizaRedTuberias(plan_tuberias);
 
-    return accion;
+    tuberias++;
+    estado_instalacion = MOVER_A_POSICION;
+    indice_tuberia = 0;
+
   }
+
+  else
+  {
+    accion = ComportamientoIngenieroNivel_5(sensores);
+  }
+
+  return accion;
 }
 
 // =========================================================================
