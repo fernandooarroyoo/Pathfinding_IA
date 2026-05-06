@@ -548,8 +548,8 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   NodoT nodo_actual;
 
   priority_queue<NodoT, vector<NodoT>, greater<NodoT>> frontier; // ordenamos de forma ascendente
-  //set<NodoT> explored;
-  map<EstadoT,int> explored;
+  // set<NodoT> explored;
+  map<EstadoT, int> explored;
 
   nodo_actual.estado = inicio;
   nodo_actual.g = 0;
@@ -564,10 +564,8 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
   {
     nodo_actual.estado.zapatillas = true;
   }
-    
 
   frontier.push(nodo_actual);
-  //explored.insert(nodo_actual);
 
   Action posibles_acciones[] = {WALK, TURN_SL, TURN_SR};
   while (!frontier.empty())
@@ -581,12 +579,12 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
       return nodo_actual.secuencia;
     }
 
-    //explored.insert(nodo_actual);
-    if(explored.count(nodo_actual.estado) and explored[nodo_actual.estado] <= nodo_actual.g){
+    // explored.insert(nodo_actual);
+    if (explored.count(nodo_actual.estado) and explored[nodo_actual.estado] <= nodo_actual.g)
+    {
       continue;
     }
     explored[nodo_actual.estado] = nodo_actual.g;
-
 
     for (Action accion : posibles_acciones)
     {
@@ -596,11 +594,10 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 
       // comprobamos que no se choca contra un muro, para evitar un bucle infinito
 
-     if (accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c)
+      if (accion == WALK and hijo.estado.site.f == nodo_actual.estado.site.f and hijo.estado.site.c == nodo_actual.estado.site.c)
       {
         continue; // descartamos al hijo porque el movimiento es ilegal, applyT ha dicho que por ahí no se puede
       }
-      
 
       unsigned char terreno_origen = terreno[nodo_actual.estado.site.f][nodo_actual.estado.site.c];
       unsigned char terreno_destino = terreno[hijo.estado.site.f][hijo.estado.site.c];
@@ -621,13 +618,12 @@ list<Action> ComportamientoTecnico::BusquedaEstrella(const EstadoT &inicio, cons
 
       hijo.secuencia.push_back(accion);
 
-      if(terreno[hijo.estado.site.f][hijo.estado.site.c] == 'D')
+      if (terreno[hijo.estado.site.f][hijo.estado.site.c] == 'D')
       {
         hijo.estado.zapatillas = true;
       }
-      
+
       frontier.push(hijo);
-      
     }
   }
 
@@ -736,7 +732,8 @@ Action ComportamientoTecnico::girarHacia(Orientacion actual, Orientacion objetiv
 
 Orientacion calcularCasillaObjetivo(int ft, int ct, int fi, int ci, Orientacion rumbo)
 {
-  if(fi!=ft and ci != ct){ //caso casilla diagonal
+  if (fi != ft and ci != ct)
+  { // caso casilla diagonal
     if ((fi < ft and ci > ct and rumbo == norte) || (fi > ft and ci > ct and rumbo == sur))
       return oeste;
     if ((fi > ft and ci < ct and rumbo == oeste) || (fi > ft and ci > ct and rumbo == este))
@@ -746,17 +743,19 @@ Orientacion calcularCasillaObjetivo(int ft, int ct, int fi, int ci, Orientacion 
     if ((fi < ft and ci < ct and rumbo == norte) || (fi > ft and ci < ct and rumbo == sur))
       return este;
   }
-  else //caso casilla recta (no diagonal)
+  else // caso casilla recta (no diagonal)
   {
-    if(fi==ft and ci>ct and rumbo == este) return oeste;
-    if(fi==ft and ci<ct and rumbo == oeste) return este;
-    if(fi<ft and ci==ct and rumbo == norte) return sur;
-    if(fi>ft and ci==ct and rumbo == sur) return norte;
+    if (fi == ft and ci > ct and rumbo == este)
+      return oeste;
+    if (fi == ft and ci < ct and rumbo == oeste)
+      return este;
+    if (fi < ft and ci == ct and rumbo == norte)
+      return sur;
+    if (fi > ft and ci == ct and rumbo == sur)
+      return norte;
   }
 
-
-
-    return norte;
+  return norte;
 }
 /**
  * @brief Comportamiento del técnico para el Nivel 5.
@@ -771,15 +770,33 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
   {
   case IR_A_BELKANITA:
   {
-    if (sensores.posF == sensores.BelPosF and sensores.posC == sensores.BelPosC)
+    if (sensores.posF == sensores.BelPosF && sensores.posC == sensores.BelPosC)
     {
       llegaBelk = true;
       estado_instalacion = ESPERAR_LLAMADA;
       hayPlan = false;
+      plan.clear();
+      tuberias = 2; 
+      break;
+    }
+
+    if (tuberias == 0)
+    {
+      int distancia_belk = abs(sensores.posF - sensores.BelPosF) + abs(sensores.posC - sensores.BelPosC);
+      if (distancia_belk <= 2)
+      {
+        cout << "Técnico en posición de espera. Esperando llamada..." << endl;
+        tuberias = 1;
+        estado_instalacion = ESPERAR_LLAMADA;
+        hayPlan = false;
+        plan.clear();
+        accion = IDLE;
+        break;
+      }
     }
     if (!hayPlan)
     {
-      cout << "Buscando el plan a la belkanita..."<<endl;
+      cout << "Buscando el plan a la belkanita..." << endl;
       EstadoT inicio, fin;
       inicio.site.f = sensores.posF;
       inicio.site.c = sensores.posC;
@@ -787,107 +804,132 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
       inicio.zapatillas = tiene_zapatillas;
       fin.site.f = sensores.BelPosF;
       fin.site.c = sensores.BelPosC;
-      plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
+
+      vector<vector<unsigned char>> mapaTemporal = mapaResultado;
+
+      if (sensores.agentes[2] == 'i')
+      {
+        ubicacion miPos = {sensores.posF, sensores.posC, sensores.rumbo};
+        ubicacion ingPos = Delante(miPos);
+
+        if (ingPos.f >= 0 && ingPos.f < mapaTemporal.size() && ingPos.c >= 0 && ingPos.c < mapaTemporal[0].size())
+        {
+          mapaTemporal[ingPos.f][ingPos.c] = 'M';
+        }
+      }
+      plan = BusquedaEstrella(inicio, fin, mapaTemporal, mapaCotas);
       VisualizaPlan(inicio.site, plan);
-      hayPlan = plan.size() != 0;
+      hayPlan = !plan.empty();
     }
     else
     {
-      cout << "plan encontrado!" << endl;
       accion = plan.front();
-      plan.pop_front();
-      if (plan.size() < 1)
-        hayPlan = false;
-    }
-    break;
-
-  case ACERCARSE:
-  {
-    if (abs(sensores.posF - sensores.GotoF) + abs(sensores.posC - sensores.GotoC) == 1)
-    {
-      if (!sensores.enfrente)
+      if (accion == WALK && (sensores.agentes[2] == 'i' || sensores.choque))
       {
-        estado_instalacion = ORIENTARSE;
+        hayPlan = false;
+        plan.clear();
+        accion = IDLE;
       }
       else
-      { 
-        estado_instalacion = ESPERAR_LLAMADA;
-        accion = INSTALL;
-      }
-      hayPlan = false;
-      plan.clear();
-      
-    }
-    else
-    {
-      if (!hayPlan)
       {
-        
-        cout << "NO hay plan"<<endl;
-        EstadoT inicio = {sensores.posF, sensores.posC, sensores.rumbo};
-        EstadoT fin = {sensores.GotoF, sensores.GotoC, norte};
-        Orientacion obj = calcularCasillaObjetivo(sensores.posF, sensores.posC, sensores.GotoF, sensores.GotoC, sensores.rumbo);
-
-        switch (obj)
+        plan.pop_front();
+        if (plan.empty()) hayPlan = false;
+      }
+    }
+    break;
+  }
+  case ACERCARSE:
+  {
+    
+    
+      if (abs(sensores.posF - sensores.GotoF) + abs(sensores.posC - sensores.GotoC) == 1)
+      {
+        if (!sensores.enfrente)
         {
-        case norte:
-        {
-          fin.site.f--;
-          break;
-        }
-        case sur:
-        {
-          fin.site.f++;
-          break;
-        }
-        case este:
-        {
-          fin.site.c++;
-          break;
-        }
-        case oeste:
-        {
-          fin.site.c--;
-          break;
-        }
-        }
-        if (fin.site.f >= 0 && fin.site.f < mapaResultado.size() &&
-            fin.site.c >= 0 && fin.site.c < mapaResultado[0].size())
-        {
-          cout << fin.site.f << fin.site.c << inicio.site.f << inicio.site.c << endl;
-          plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
-          hayPlan = !plan.empty();
+          estado_instalacion = ORIENTARSE;
         }
         else
         {
-          hayPlan = false;
+          estado_instalacion = ESPERAR_LLAMADA;
+          accion = INSTALL;
         }
-       
+        hayPlan = false;
+        plan.clear();
       }
-      else if (hayPlan and !plan.empty())
+      else
       {
-        accion = plan.front();
-        plan.pop_front();
-        if (plan.empty())
-          hayPlan = false;
+        if (!hayPlan)
+        {
+
+          cout << "NO hay plan" << endl;
+          EstadoT inicio = {sensores.posF, sensores.posC, sensores.rumbo};
+          EstadoT fin = {sensores.GotoF, sensores.GotoC, norte};
+          Orientacion obj = calcularCasillaObjetivo(sensores.posF, sensores.posC, sensores.GotoF, sensores.GotoC, sensores.rumbo);
+
+          switch (obj)
+          {
+          case norte:
+          {
+            fin.site.f--;
+            break;
+          }
+          case sur:
+          {
+            fin.site.f++;
+            break;
+          }
+          case este:
+          {
+            fin.site.c++;
+            break;
+          }
+          case oeste:
+          {
+            fin.site.c--;
+            break;
+          }
+          }
+          if (fin.site.f >= 0 && fin.site.f < mapaResultado.size() &&
+              fin.site.c >= 0 && fin.site.c < mapaResultado[0].size())
+          {
+            cout << fin.site.f << fin.site.c << inicio.site.f << inicio.site.c << endl;
+            plan = BusquedaEstrella(inicio, fin, mapaResultado, mapaCotas);
+            hayPlan = !plan.empty();
+          }
+          else
+          {
+            hayPlan = false;
+          }
+        }
+        else if (hayPlan and !plan.empty())
+        {
+          accion = plan.front();
+          plan.pop_front();
+          if (plan.empty())
+            hayPlan = false;
+        }
       }
-    }
+    
+
     break;
   }
 
   case ESPERAR_LLAMADA:
   {
-    if(sensores.enfrente)
+    if (sensores.enfrente)
     {
-      accion=INSTALL;
+      accion = INSTALL;
     }
     if (sensores.venpaca)
     {
-      if (!llegaBelk)
+      if (tuberias <= 1)
       {
+        // Todavía tenemos que pisar la Belkanita
         estado_instalacion = IR_A_BELKANITA;
       }
-      else{
+      else
+      {
+        // Ya instalamos la tubería 1, ahora perseguimos al ingeniero
         estado_instalacion = ACERCARSE;
       }
     }
@@ -908,20 +950,13 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores)
     {
       accion = INSTALL;
       estado_instalacion = ESPERAR_LLAMADA;
-      //estado_instalacion = INSTALAR_T;
+      // estado_instalacion = INSTALAR_T;
     }
     break;
   }
-
-  case INSTALAR_T:
-  {
-    accion = INSTALL;
-    estado_instalacion = ESPERAR_LLAMADA;
-  }
-  }
   }
 
-  cout << "ESTADO_T: " <<estado_instalacion<<endl;
+  cout << "ESTADO_T: " << estado_instalacion << endl;
   return accion;
 }
 

@@ -647,25 +647,29 @@ int ComportamientoIngeniero::impactoInstall(unsigned char terr)
 
 list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, const list<NodoTub> &final, const vector<vector<unsigned char>> &terreno, vector<vector<unsigned char>> &altura, int maximo_impacto)
 {
-  
+
   priority_queue<NodoTub, vector<NodoTub>, greater<NodoTub>> frontier;
-  map<NodoTub,int> mejor_impacto;
-  
+  map<NodoTub, int> mejor_impacto;
+
   unsigned char terr_ini = terreno[inicio.f][inicio.c];
   int alt_ori = altura[inicio.f][inicio.c];
 
-  for(int op = -1 ; op <= 1; op++)
+  for (int op = -1; op <= 1; op++)
   {
-    if(op != 0 and terr_ini == 'A') continue;
+    if (op != 0 and terr_ini == 'A')
+      continue;
 
     int alt_ini = alt_ori + op;
-    if(alt_ini < 1 or alt_ini > 9) continue;
+    if (alt_ini < 1 or alt_ini > 9)
+      continue;
 
-    int coste_energia_op = calcularEnergia(terr_ini,op);
-    int coste_impacto_op = calcularImpacto(terr_ini,op);
+    int coste_energia_op = calcularEnergia(terr_ini, op) + energiaInstall(terr_ini);
+    int coste_impacto_op = calcularImpacto(terr_ini, op) + impactoInstall(terr_ini);
 
-    if(inicio.energia_acumulada - coste_energia_op < 0) continue;
-    if(inicio.impacto_acumulado + coste_impacto_op > maximo_impacto) continue;
+    if (inicio.energia_acumulada - coste_energia_op < 0)
+      continue;
+    if (inicio.impacto_acumulado + coste_impacto_op > maximo_impacto)
+      continue;
 
     NodoTub nodo_arranque = inicio;
     nodo_arranque.altura = alt_ini;
@@ -674,15 +678,16 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
     nodo_arranque.g = 0;
 
     int dist_min = 200000;
-    for(const auto &p : final)
+    for (const auto &p : final)
     {
       int dist = abs(p.f - inicio.f) + abs(p.c - inicio.c);
-      if(dist < dist_min) dist_min = dist;
+      if (dist < dist_min)
+        dist_min = dist;
     }
 
     nodo_arranque.h = dist_min;
 
-    Paso paso_ini = {inicio.f,inicio.c,op};
+    Paso paso_ini = {inicio.f, inicio.c, op};
     nodo_arranque.secuencia.push_back(paso_ini);
 
     frontier.push(nodo_arranque);
@@ -698,7 +703,8 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
     clave_actual.c = nodo_actual.c;
     clave_actual.altura = nodo_actual.altura;
 
-    if(mejor_impacto[clave_actual] < nodo_actual.impacto_acumulado) continue;
+    if (mejor_impacto[clave_actual] < nodo_actual.impacto_acumulado)
+      continue;
 
     // condicion de parada
     for (const auto &p : final)
@@ -759,7 +765,7 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         if (impacto_total > maximo_impacto || energia_restante < 0)
         {
-          
+
           continue; // si superan el umbral no las queremos
         }
 
@@ -795,7 +801,7 @@ list<Paso> ComportamientoIngeniero::Estrella_tuberias(const NodoTub &inicio, con
 
         auto it = mejor_impacto.find(clave);
 
-        if(it == mejor_impacto.end() || hijo.impacto_acumulado < it->second)
+        if (it == mejor_impacto.end() || hijo.impacto_acumulado < it->second)
         {
           mejor_impacto[clave] = hijo.impacto_acumulado;
           frontier.push(hijo);
@@ -847,7 +853,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
   return IDLE;
 }
 
-
 Orientacion calcularOrientacion(EstadoI desde, EstadoI hacia)
 {
   int dif_f = hacia.site.f - desde.site.f;
@@ -890,7 +895,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
     if (plan_tuberias.empty())
       ComportamientoIngenieroNivel_4(sensores);
     llegaBelk = true;
-    indice_tuberia = 1;
+    indice_tuberia = 0;
     estado_instalacion = MOVER_A_POSICION;
     terreno_preparado = false;
   }
@@ -903,9 +908,13 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
     advance(it_actual, indice_tuberia);
     EstadoI pos_objetivo = {it_actual->fil, it_actual->col, norte};
 
-    auto it_anterior = plan_tuberias.begin();
-    advance(it_anterior, indice_tuberia - 1);
-    EstadoI pos_anterior = {it_anterior->fil, it_anterior->col, norte};
+    EstadoI pos_anterior;
+    if (indice_tuberia > 0)
+    {
+      auto it_anterior = plan_tuberias.begin();
+      advance(it_anterior, indice_tuberia - 1);
+      pos_anterior = {it_anterior->fil, it_anterior->col, norte};
+    }
 
     switch (estado_instalacion)
     {
@@ -922,13 +931,38 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
         {
           EstadoI inicio = {sensores.posF, sensores.posC, sensores.rumbo};
           EstadoI fin = {pos_objetivo.site.f, pos_objetivo.site.c, norte};
-          plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
-        }
 
+          vector<vector<unsigned char>> mapaTemporal = mapaResultado;
+
+          if (sensores.agentes[2] == 't')
+          {
+            ubicacion mi_posicion = {sensores.posF, sensores.posC, sensores.rumbo};
+            ubicacion pos_tecnico = Delante(mi_posicion);
+
+            // no sale del mapa
+            if (pos_tecnico.f >= 0 && pos_tecnico.f < mapaTemporal.size() &&
+                pos_tecnico.c >= 0 && pos_tecnico.c < mapaTemporal[0].size())
+            {
+              // marcamos como muro
+              mapaTemporal[pos_tecnico.f][pos_tecnico.c] = 'M';
+            }
+          }
+          plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+          cout << "PLANSIZE =" << plan.size() << endl;
+        }
         if (!plan.empty())
         {
           accion = plan.front();
-          plan.pop_front();
+          if (accion == WALK and (sensores.agentes[2] == 't' or sensores.choque))
+          {
+            hayPlan = false;
+            plan.clear();
+            accion = IDLE;
+          }
+          else
+          {
+            plan.pop_front();
+          }
         }
       }
       break;
@@ -952,6 +986,13 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
           break;
         }
       }
+      if (indice_tuberia == 0)
+      {
+        indice_tuberia++;
+        estado_instalacion = MOVER_A_POSICION;
+        terreno_preparado = false;
+        break;
+      }
 
       estado_instalacion = ORIENTARSE_Y_LLAMAR;
       break;
@@ -968,8 +1009,17 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       }
       else
       {
-        accion = COME;
-        estado_instalacion = ESPERAR_TECNICO;
+        if (sensores.enfrente)
+        {
+          accion = INSTALL;
+          indice_tuberia++;
+          estado_instalacion = MOVER_A_POSICION;
+        }
+        else
+        {
+          accion = COME;
+          estado_instalacion = ESPERAR_TECNICO;
+        }
       }
       break;
     }
@@ -986,14 +1036,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       {
         accion = COME;
       }
-      break;
-    }
-
-    case INSTALAR:
-    {
-      accion = INSTALL;
-      indice_tuberia++;
-      estado_instalacion = MOVER_A_POSICION;
       break;
     }
     }
@@ -1039,7 +1081,6 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
 
     VisualizaRedTuberias(plan_tuberias);
 
-    
     return accion;
   }
 }

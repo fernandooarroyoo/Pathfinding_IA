@@ -26,7 +26,6 @@
   ESPERAR_LLAMADA,
   ACERCARSE,
   ORIENTARSE,
-  INSTALAR_T
  };
 
 struct EstadoT
@@ -107,6 +106,7 @@ public:
     giro45Izq = 0;
     estado_instalacion = IR_A_BELKANITA;
     llegaBelk = false;
+    tuberias = 0;
   }
 
   /**
@@ -123,6 +123,7 @@ public:
     giro45Izq = 0;
     tiene_zapatillas = false;
     estado_instalacion = IR_A_BELKANITA;
+    tuberias = 0;
   }
 
   ComportamientoTecnico(const ComportamientoTecnico &comport) : Comportamiento(comport) {}
@@ -305,6 +306,7 @@ protected:
 
 
   bool llegaBelk;
+  int tuberias;
 
   EstadoInstalacionT estado_instalacion;
 };
